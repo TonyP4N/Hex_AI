@@ -12,6 +12,7 @@ class NaiveAgent():
     PORT = 1234
 
     def __init__(self, board_size=11):
+        print('np')
         self.s = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM
         )
