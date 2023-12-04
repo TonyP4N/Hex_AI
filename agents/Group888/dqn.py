@@ -239,6 +239,7 @@ class Board:
         self._tiles[x][y].set_colour(colour)
 
 
+
 class HexDQN(NaiveAgent):
     HOST = "127.0.0.1"
     PORT = 1234
@@ -249,7 +250,7 @@ class HexDQN(NaiveAgent):
         self.board_size = 11
         self.board = self.board = [
                     [0]*self.board_size for i in range(self.board_size)]
-        self.colour = "R"
+        self.colour = Colour.RED
         self.turn_count = 0
 
         self.state_size = 121
@@ -290,6 +291,7 @@ class HexDQN(NaiveAgent):
         return vectorized_board
 
     def act(self, state):
+        state = state.split(",")
         if np.random.rand() <= self.epsilon:
             choices = []
             for i in range(self.board_size):
@@ -346,10 +348,17 @@ class HexDQN(NaiveAgent):
     def replay(self, batch_size):
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
+            state = self.board_string_to_vector(state.print_board().split(","))
+            state = np.array(state).reshape((1, -1))
+            next_state = self.board_string_to_vector(next_state.print_board().split(","))
+            next_state = np.array(next_state).reshape((1, -1))
             target = reward
             if not done:
                 target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
             target_f = self.model.predict(state)
+            # print(target_f[0])
+            action = action[0]*11+action[1]
+            # print(action)
             target_f[0][action] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
@@ -365,22 +374,28 @@ class HexDQN(NaiveAgent):
 #     agent = HexDQN()
 #     agent.run()
 agent1 = HexDQN()
+agent1.colour = Colour.RED
+agent2 = HexDQN()
+agent2.colour = Colour.BLUE
 board = Board()
-# agent2 = HexDQN()
 state_size = 121# Define state size based on Hex board representation
 action_size = 121# Define action size based on possible moves in Hex
 batch_size = 32
 
-def calculate_reward(old_board, new_board, action):
+def calculate_reward(old_board, new_board, action, player):
     reward = 0.0
 
-    print(str(new_board))
-    Board.from_string(str(new_board))
-    outcome = Board.has_ended()
+    outcome = new_board.has_ended()
     if outcome == Colour.RED:
-        reward += 1.0
+        if player == 1:
+            reward += 1.0
+        else:
+            reward -= 1.0
     elif outcome == Colour.BLUE:
-        reward -= 1.0
+        if player == 2:
+            reward += 1.0
+        else:
+            reward -= 1.0
     elif outcome == None:
         reward += 0.0  # or some small value to denote a tie
 
@@ -392,45 +407,94 @@ def calculate_reward(old_board, new_board, action):
 
     return reward
 def is_valid_position(old_board, action):
-    if old_board[action[0]][action[1]] != 0:
+    old_board = old_board.get_tiles()
+    print('Colour',old_board[action[0]][action[1]].colour)
+    if old_board[action[0]][action[1]].colour != None:
         return False
     return True
 
-
+redwin = 0
+bluewin = 0
 
 for e in range(30):
     # reset state at the start of each game
     state = Board()
     # state = np.reshape(state, [1, state_size])
-
-    for time in range(500):
+    done = None
+    print('blue:',bluewin)
+    print('red:',redwin)
+    for time in range(100):
         # agent takes action
-        print(state.print_board())
-        action = agent1.act()
+        state_string = state.print_board()
+        action1 = agent1.act(state.print_board())
         # apply action, get rewards and new state
-        print(state)
-        next_state = state
-        next_state[action[0]][action[1]] = agent1.colour
-        print(next_state)
-        reward = calculate_reward(state,next_state,action)
-        Board.from_string(str(next_state))
-        outcome = Board.has_ended()
+        next_state = Board.from_string(state_string,11,bnf=True)
+        next_state.set_tile_colour(action1[0],action1[1],agent1.colour)
+        reward1 = calculate_reward(state,next_state,action1,1)
+        # Board.from_string(str(next_state))
+        outcome = next_state.has_ended()
         if outcome == Colour.RED:
+            redwin +=1
             done = True
-        elif outcome == Colour.BLUE:
+        elif outcome == Colour.BLUE or reward1 == -100000:
+            bluewin +=1
             done = True
         elif outcome == None:
             done = False  # or some small value to denote a tie
         
         # remember the previous state, action, reward, and done
-        agent1.remember(state, action, reward, next_state, done)
+        print('reward1:',reward1)
+        agent1.remember(state, action1, reward1, next_state, done)
 
         # make next_state the new current state
-        state = next_state
+        state = Board.from_string(next_state.print_board(),11,bnf=True)
+
+        if done:
+            # print the score and break out of the loop
+            break
+        print('after p1 move ----------------------------------------')
+        print(state.print_board(bnf=False))
+
+        state_string = state.print_board()
+        action2 = agent2.act(state_string)
+        # apply action, get rewards and new state
+        next_state = Board.from_string(state_string,11,bnf=True)
+        next_state.set_tile_colour(action2[0],action2[1],agent2.colour)
+
+        reward2 = calculate_reward(state,next_state,action2,2)
+        # Board.from_string(str(next_state))
+        outcome = next_state.has_ended()
+        if outcome == Colour.RED or reward2 == -100000:
+            redwin +=1
+            done = True
+        elif outcome == Colour.BLUE:
+            bluewin +=1
+            done = True
+        elif outcome == None:
+            done = False  # or some small value to denote a tie
+        
+        # remember the previous state, action, reward, and done
+        print('reward2:',reward2)
+        agent2.remember(state, action2, reward2, next_state, done)
+
+        # make next_state the new current state
+        state = Board.from_string(next_state.print_board(),11,bnf=True)
 
         if done:
             # print the score and break out of the loop
             break
 
+        print('after p2 move ----------------------------------------')
+        print(state.print_board(bnf=False))
+
+        
         if len(agent1.memory) > batch_size:
             agent1.replay(batch_size)
+        if len(agent2.memory) > batch_size:
+            agent2.replay(batch_size)
+
+
+
+agent2.save(agent2)
+agent1.save(agent1)
+
