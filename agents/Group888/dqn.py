@@ -416,7 +416,7 @@ def is_valid_position(old_board, action):
 redwin = 0
 bluewin = 0
 
-for e in range(30):
+for e in range(20):
     # reset state at the start of each game
     state = Board()
     # state = np.reshape(state, [1, state_size])
@@ -452,7 +452,6 @@ for e in range(30):
         if done:
             # print the score and break out of the loop
             break
-        print('after p1 move ----------------------------------------')
         print(state.print_board(bnf=False))
 
         state_string = state.print_board()
@@ -484,7 +483,6 @@ for e in range(30):
             # print the score and break out of the loop
             break
 
-        print('after p2 move ----------------------------------------')
         print(state.print_board(bnf=False))
 
         
@@ -495,6 +493,6 @@ for e in range(30):
 
 
 
-agent2.save(agent2)
-agent1.save(agent1)
+agent2.save("agent2_weights.h5")
+agent1.save("agent1_weights.h5")
 
