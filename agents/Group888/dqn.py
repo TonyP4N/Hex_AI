@@ -2,7 +2,7 @@ import numpy as np
 import random
 from collections import deque
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Conv2D, Flatten
 from keras.optimizers import Adam
 from random import choice
 
@@ -255,8 +255,11 @@ class HexDQN(NaiveAgent):
 
         self.state_size = 121
         self.action_size = 121
-        self.memory = deque(maxlen=2000)
-        self.gamma = 0.95  # discount rate
+        self.memory = deque(maxlen=50000)
+        self.current_game_memory = []
+
+        # self.gamma = 0.95  # discount rate
+        self.gamma = 1  # discount rate
         self.epsilon = 0.8  # exploration rate
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
@@ -268,15 +271,24 @@ class HexDQN(NaiveAgent):
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
-        model = Sequential()
-        model.add(Dense(128, input_dim=self.state_size, activation='relu'))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        # model = Sequential()
+        # model.add(Dense(128, input_dim=self.state_size, activation='relu'))
+        # model.add(Dense(128, activation='relu'))
+        # model.add(Dense(self.action_size, activation='linear'))
+        # model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        # return model
+
+        model = Sequential()   
+        model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same', input_shape=(11, 11, 1)))
+        for _ in range(9):  
+           model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
+        model.add(Flatten()) 
+        model.add(Dense(self.action_size, activation='sigmoid'))  
+        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))  
         return model
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        self.current_game_memory.append((state, action, reward, next_state, done))
 
     def board_string_to_vector(self,board_string):
         symbol_to_vector = {
@@ -302,7 +314,7 @@ class HexDQN(NaiveAgent):
             self.randnum += 1
         else:
             numerical_board = self.board_string_to_vector(state)
-            predict = self.model.predict(np.array(numerical_board).reshape((1, -1)))
+            predict = self.model.predict(np.array(numerical_board).reshape((1, 11, 11, 1)))
             predict= np.argmax(predict[0])
             x = predict//11
             y = predict%11
@@ -346,12 +358,15 @@ class HexDQN(NaiveAgent):
         self.previousState = self.board
 
     def replay(self, batch_size):
+        if len(self.memory) < batch_size:
+            return
+        
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
             state = self.board_string_to_vector(state.print_board().split(","))
-            state = np.array(state).reshape((1, -1))
+            state = np.array(state).reshape((1, 11, 11, 1))
             next_state = self.board_string_to_vector(next_state.print_board().split(","))
-            next_state = np.array(next_state).reshape((1, -1))
+            next_state = np.array(next_state).reshape((1, 11, 11, 1))
             target = reward
             if not done:
                 target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
@@ -370,6 +385,14 @@ class HexDQN(NaiveAgent):
     def save(self, name):
         self.model.save_weights(name)
 
+    def end_game(self, win):
+        # 游戏结束时调用此方法来更新记忆并将其添加到主记忆库
+        feedback = 1 if win else -1
+        for state, action, reward, next_state, done in self.current_game_memory:
+            # 更新奖励并添加到主记忆库
+            self.memory.append((state, action, reward+feedback, next_state, done))
+        self.current_game_memory.clear()  # 清空当前游戏的记忆
+
 # if (__name__ == "__main__"):
 #     agent = HexDQN()
 #     agent.run()
@@ -384,28 +407,32 @@ batch_size = 32
 
 def calculate_reward(old_board, new_board, action, player):
     reward = 0.0
-
-    outcome = new_board.has_ended()
-    if outcome == Colour.RED:
-        if player == 1:
-            reward += 1.0
-        else:
-            reward -= 1.0
-    elif outcome == Colour.BLUE:
-        if player == 2:
-            reward += 1.0
-        else:
-            reward -= 1.0
-    elif outcome == None:
-        reward += 0.0  # or some small value to denote a tie
+    valid_move_flag = True
+    # outcome = new_board.has_ended()
+    # if outcome == Colour.RED:
+    #     if player == 1:
+    #         reward += 1.0
+    #     else:
+    #         reward -= 1.0
+    # elif outcome == Colour.BLUE:
+    #     if player == 2:
+    #         reward += 1.0
+    #     else:
+    #         reward -= 1.0
+    # elif outcome == None:
+    #     reward += 0.0  # or some small value to denote a tie
 
     # Evaluate strategic moves - this is simplified
     if is_valid_position(old_board, action):
-        reward += 0.1  # small reward for making a progressive move
+        # reward += 0.1  # small reward for making a progressive move
+        reward += 0
     else:
-        reward += -100000
+        reward += -100  # big penalty for making an invalid move
+        valid_move_flag = False
 
-    return reward
+    return reward, valid_move_flag
+
+
 def is_valid_position(old_board, action):
     old_board = old_board.get_tiles()
     print('Colour',old_board[action[0]][action[1]].colour)
@@ -416,42 +443,55 @@ def is_valid_position(old_board, action):
 redwin = 0
 bluewin = 0
 
-for e in range(20):
+for e in range(200):
     # reset state at the start of each game
     state = Board()
-    # state = np.reshape(state, [1, state_size])
     done = None
     print('blue:',bluewin)
     print('red:',redwin)
-    for time in range(100):
+    while not done:
+        if (len(agent1.memory) + len(agent1.current_game_memory)) % batch_size == 0:
+            agent1.replay(batch_size)
+        if (len(agent2.memory) + len(agent2.current_game_memory)) % batch_size == 0:
+            agent2.replay(batch_size)
+
         # agent takes action
         state_string = state.print_board()
         action1 = agent1.act(state.print_board())
         # apply action, get rewards and new state
         next_state = Board.from_string(state_string,11,bnf=True)
         next_state.set_tile_colour(action1[0],action1[1],agent1.colour)
-        reward1 = calculate_reward(state,next_state,action1,1)
+        reward1, valid_move_flag1 = calculate_reward(state,next_state,action1,agent1)
+        print(state.print_board(bnf=False))
+
         # Board.from_string(str(next_state))
         outcome = next_state.has_ended()
         if outcome == Colour.RED:
             redwin +=1
             done = True
-        elif outcome == Colour.BLUE or reward1 == -100000:
+        elif outcome == Colour.BLUE or valid_move_flag1 == False:
             bluewin +=1
             done = True
         elif outcome == None:
             done = False  # or some small value to denote a tie
-        
-        # remember the previous state, action, reward, and done
+        print('player:', agent1.colour)
+        print('action1:',action1)
         print('reward1:',reward1)
+
+
+        if done:
+            agent1.end_game(win = valid_move_flag1)
+            agent2.end_game(win = not valid_move_flag1)
+            break
+
+
+        # remember the previous state, action, reward, and done
+        
         agent1.remember(state, action1, reward1, next_state, done)
 
         # make next_state the new current state
         state = Board.from_string(next_state.print_board(),11,bnf=True)
 
-        if done:
-            # print the score and break out of the loop
-            break
         print(state.print_board(bnf=False))
 
         state_string = state.print_board()
@@ -459,11 +499,10 @@ for e in range(20):
         # apply action, get rewards and new state
         next_state = Board.from_string(state_string,11,bnf=True)
         next_state.set_tile_colour(action2[0],action2[1],agent2.colour)
-
-        reward2 = calculate_reward(state,next_state,action2,2)
+        reward2, valid_move_flag2 = calculate_reward(state,next_state,action2,2)
         # Board.from_string(str(next_state))
         outcome = next_state.has_ended()
-        if outcome == Colour.RED or reward2 == -100000:
+        if outcome == Colour.RED or valid_move_flag2 == False:
             redwin +=1
             done = True
         elif outcome == Colour.BLUE:
@@ -473,24 +512,22 @@ for e in range(20):
             done = False  # or some small value to denote a tie
         
         # remember the previous state, action, reward, and done
+        print(state.print_board(bnf=False))
+
+        print('player:', agent2.colour)
+        print('action2:',action2)
         print('reward2:',reward2)
         agent2.remember(state, action2, reward2, next_state, done)
 
         # make next_state the new current state
         state = Board.from_string(next_state.print_board(),11,bnf=True)
 
+
         if done:
-            # print the score and break out of the loop
+            agent1.end_game(win = not valid_move_flag2)
+            agent2.end_game(win = valid_move_flag2)
             break
-
-        print(state.print_board(bnf=False))
-
         
-        if len(agent1.memory) > batch_size:
-            agent1.replay(batch_size)
-        if len(agent2.memory) > batch_size:
-            agent2.replay(batch_size)
-
 
 
 agent2.save("agent2_weights.h5")

@@ -4,7 +4,7 @@ from time import sleep
 
 import numpy as np
 from keras.models import Sequential
-from keras.src.layers import Dense
+from keras.src.layers import Dense, Conv2D, Flatten
 from keras.optimizers import Adam
 
 
@@ -42,23 +42,27 @@ class HexAgent():
         self.model = self._build_model()
 
         # 使用随机数据通过模型，以便创建权重
-        dummy_input = np.zeros((1, self.state_size))
-        self.model.predict(dummy_input)
+        # dummy_input = np.zeros((1, self.state_size))
+        # self.model.predict(dummy_input)
 
         # 现在加载权重
-        self.model.load_weights("C:/Users/adminstor/Desktop/COMP34111_g60486zz/agents/agent1_weights.h5")
+        self.model.load_weights("C:/Users/zhy20/Desktop/Hex_AI/agent1_weights.h5")
 
     def load(self, name):
         self.model.load_weights(name)
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
-        model = Sequential()
-        model.add(Dense(128, input_dim=self.state_size, activation='relu'))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        model = Sequential()   
+        model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same', input_shape=(11, 11, 1)))
+        for _ in range(9):  
+           model.add(Conv2D(128, kernel_size=(3, 3), activation='relu', padding='same'))
+        model.add(Flatten()) 
+        model.add(Dense(self.action_size, activation='sigmoid'))  
+        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))  
         return model
+    
+
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
 
@@ -116,7 +120,7 @@ class HexAgent():
         input_board = np.where(flat_board == 'R', 1, flat_board)
         input_board = np.where(input_board == 'B', -1, input_board)
         input_board = np.where(input_board == 0, 0, input_board)
-        return np.array(input_board, dtype='float32').reshape((1, -1))
+        return np.array(input_board, dtype='float32').reshape((1, 11, 11, 1))
 
     def make_move(self):
         """使用训练好的模型来选择最佳移动。"""
