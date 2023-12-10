@@ -19,7 +19,7 @@ def fill_connect(state, cell, color, checked):
 	for n in neighbors(cell):
 		if(not checked[n]):
 			if(state[color,n[0], n[1]]):
-				connected = connected + fill_connect(state, n, color, checked)
+				connected = connected | fill_connect(state, n, color, checked)
 			elif(not state[other(color), n[0], n[1]]):
 				connected.add(n)
 	return connected
@@ -131,6 +131,7 @@ def score(state, color):
 	Q = {}
 	num_empty, empty = get_empty(state)
 	#filled_fraction = (boardsize**2-num_empty+1)/boardsize**2
+
 	I1, C1 = resistance(state, empty, color)
 	I2, C2 = resistance(state, empty, other(color))
 
@@ -146,6 +147,6 @@ def score(state, color):
 			Q[cell] = min(1,max(-1,C1_prime/C2_prime - 1))
 
 	output = -1*np.ones((boardsize, boardsize))
-	for cell, value in Q.iteritems():
+	for cell, value in Q.items():
 		output[cell[0]-padding, cell[1]-padding] = value
 	return output 

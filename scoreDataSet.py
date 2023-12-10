@@ -18,5 +18,5 @@ for i in range(num_positions):
 		i-=1
 
 print ("saving to file...")
-savefile = open("train_data/scoredPositionsFull.npz", 'w')
+savefile = open("train_data/scoredPositionsFull.npz", 'wb')
 np.savez(savefile, positions=positions, scores=scores)

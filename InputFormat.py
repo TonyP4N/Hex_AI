@@ -4,7 +4,8 @@ white = 0
 black = 1
 
 def other(color):
-	return not color
+	if color == 0: return 1
+	if color == 1: return 0
 
 west = 2
 east = 3
