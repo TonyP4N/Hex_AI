@@ -7,7 +7,7 @@ import numpy.random as rand
 from inputFormat import *
 from small_network import network
 import matplotlib.pyplot as plt
-import pickle as cPickle
+import six.moves.cPickle as cPickle
 import argparse
 import os
 
@@ -36,7 +36,7 @@ parser.add_argument("--data", "-d", type =str, help="Specify a directory to save
 args = parser.parse_args()
 
 print ("loading data... ")
-datafile = open("train_data/scoredPositionsFull.npz", 'r')
+datafile = open("train_data/scoredPositionsFull.npz", 'rb')
 data = np.load(datafile)
 positions = data['positions']
 scores = data['scores']
@@ -67,7 +67,7 @@ y = T.tensor3('y') #target output score
 numEpochs = 100
 iteration = 0
 batch_size = 64
-numBatches = n_train/batch_size
+numBatches = n_train//batch_size
 
 #if load parameter is passed load a network from a file
 if args.load:
@@ -117,10 +117,11 @@ evaluate_model = theano.function(
 costs = []
 
 print ("Training model on mentor set...")
-indices = range(n_train)
+indices = np.arange(n_train)
+print(indices)
 try:
 	for epoch in range(numEpochs):
-		print ("epoch: "),epoch
+		print ("epoch: ",epoch)
 		np.random.shuffle(indices)
 		cost_sum = 0
 		for batch in range(numBatches):
@@ -131,7 +132,7 @@ try:
 			run_time = time.clock()-t
 			cost_sum+=cost
 			iteration+=1
-			print ("Cost: "),cost_sum/(batch+1), " Time per position: ", run_time/(batch_size)
+			print("Cost: ",cost_sum/(batch+1), " Time per position: ", run_time/(batch_size))
 		costs.append(cost_sum/(batch+1))
 		plt.plot(costs)
 		plt.ylabel('cost')
