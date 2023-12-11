@@ -1,12 +1,24 @@
-(;FF[4]EV[hex.ld.HEX15]PB[Aikczech]PW[Daniel Sepczuk]SZ[15]GC[ game #2420073]SO[https://www.littlegolem.net];W[gi];B[swap];W[hj];B[ed];W[fe];B[gh];W[di];B[ei])
 
-(;FF[4]EV[hex.ld.HEX15]PB[sya11]PW[Daniel Sepczuk]SZ[15]GC[ game #2419419]SO[https://www.littlegolem.net];W[ak];B[swap];W[de];B[ed];W[cd];B[dc];W[cc];B[db];W[cb];B[dl];W[bm];B[dj];W[ld];B[kl];W[ll];B[lk];W[jl];B[jm];W[mk];B[mj];W[gj];B[gi];W[jg];B[ih];W[jh];B[ii];W[ji];B[ij];W[kj];B[im];W[il];B[hm];W[fj];B[fi])
 
-(;FF[4]EV[hex.ld.DEFAULT]PB[Daniel Sepczuk]PW[JKB]SZ[13]GC[ game #2418782]SO[https://www.littlegolem.net];W[cb];B[dj];W[ji];B[jd];W[ei];B[ge];W[be])
+
+
+(;FF[4]EV[hex.ld.DEFAULT]PB[sya11]PW[Daniel Sepczuk]SZ[13]GC[ game #2423208]SO[https://www.littlegolem.net];W[am];B[swap];W[dj];B[ed];W[dd];B[de];W[fd];B[ei];W[eg];B[cl];W[bl];B[ef])
+
+(;FF[4]EV[hex.ld.HEX11]PB[hexanna]PW[Daniel Sepczuk]SZ[11]RE[W]GC[ game #2423035]SO[https://www.littlegolem.net];W[resign])
+
+(;FF[4]EV[hex.ld.HEX15]PB[hexanna]PW[Daniel Sepczuk]SZ[15]GC[ game #2422869]SO[https://www.littlegolem.net];W[ak];B[swap];W[ld];B[kl];W[ll];B[lk];W[jl];B[ke];W[kg];B[lb];W[mb];B[lc];W[mc];B[le];W[mf];B[nd];W[kd];B[je];W[ef];B[ed];W[dd];B[de];W[fd];B[fc];W[gc];B[gi];W[fh];B[fe];W[ej];B[ei];W[fi];B[ff])
+
+(;FF[4]EV[hex.ld.HEX11]PB[Warren Bei]PW[Daniel Sepczuk]SZ[11]RE[W]GC[ game #2422712]SO[https://www.littlegolem.net];W[cb];B[hd];W[dh];B[ci];W[di];B[ee];W[cf];B[dg];W[bh];B[cj];W[ch];B[bg];W[ef];B[df];W[dd];B[dj];W[hg];B[cg];W[fe];B[hc];W[resign])
+
+(;FF[4]EV[hex.ld.HEX15]PB[Aikczech]PW[Daniel Sepczuk]SZ[15]GC[ game #2420073]SO[https://www.littlegolem.net];W[gi];B[swap];W[hj];B[ed];W[fe];B[gh];W[di];B[ei];W[dj];B[gc];W[hd];B[ge];W[gd];B[eh];W[dh];B[ef];W[ff];B[ej];W[cl];B[dl];W[cm];B[dk];W[ck];B[eg];W[kg];B[gl];W[il];B[ik];W[lj];B[lh];W[ki];B[li];W[jk];B[kf];W[me];B[lf];W[nf];B[mf])
+
+(;FF[4]EV[hex.ld.HEX15]PB[sya11]PW[Daniel Sepczuk]SZ[15]RE[W]GC[ game #2419419]SO[https://www.littlegolem.net];W[ak];B[swap];W[de];B[ed];W[cd];B[dc];W[cc];B[db];W[cb];B[dl];W[bm];B[dj];W[ld];B[kl];W[ll];B[lk];W[jl];B[jm];W[mk];B[mj];W[gj];B[gi];W[jg];B[ih];W[jh];B[ii];W[ji];B[ij];W[kj];B[im];W[il];B[hm];W[fj];B[fi];W[hl];B[lb];W[mb];B[lc];W[mc];B[ki];W[jj];B[gm];W[gl];B[fm];W[resign])
+
+(;FF[4]EV[hex.ld.DEFAULT]PB[Daniel Sepczuk]PW[JKB]SZ[13]GC[ game #2418782]SO[https://www.littlegolem.net];W[cb];B[dj];W[ji];B[jd];W[ei];B[ge];W[be];B[jj];W[ij];B[hl];W[kk];B[ik];W[gj];B[ef];W[he];B[jc];W[hd];B[gh];W[bh];B[fj];W[ck];B[bj];W[ej])
 
 (;FF[4]EV[hex.ld.DEFAULT]PB[sya11]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #2418322]SO[https://www.littlegolem.net];W[cb];B[dj];W[ji];B[jj];W[ij];B[jd];W[gg];B[ge];W[cf];B[ce];W[eh];B[ed];W[de];B[dd];W[ee];B[hl];W[kk];B[il];W[li];B[ki];W[lh];B[kh];W[lg];B[kg];W[fd];B[el];W[cl];B[ek];W[ci];B[bk];W[gl];B[gj];W[hj];B[hh];W[resign])
 
-(;FF[4]EV[hex.ld.HEX11]PB[Kevin O'Gorman]PW[Daniel Sepczuk]SZ[11]GC[ game #2418104]SO[https://www.littlegolem.net];W[fc];B[swap];W[ef];B[hd];W[hg];B[eg];W[ff];B[gg];W[ci];B[dh])
+(;FF[4]EV[hex.ld.HEX11]PB[Kevin O'Gorman]PW[Daniel Sepczuk]SZ[11]RE[B]GC[ game #2418104]SO[https://www.littlegolem.net];W[fc];B[swap];W[ef];B[hd];W[hg];B[eg];W[ff];B[gg];W[ci];B[dh];W[he];B[ed];W[fd];B[gb];W[fc];B[fb];W[id];B[resign])
 
 (;FF[4]EV[hex.ld.DEFAULT]PB[Daniel Sepczuk]PW[brzytwa]SZ[13]RE[W]GC[ game #2418103]SO[https://www.littlegolem.net];W[cb];B[dj];W[ji];B[jj];W[ij];B[jd];W[be];B[gg];W[bk];B[dk];W[bl];B[ch];W[ld];B[if];W[dh];B[ci];W[di];B[cj];W[kd];B[jg];W[resign])
 
@@ -20,7 +32,7 @@
 
 (;FF[4]EV[hex.cv.HEX11.5.1.1]PB[Daniel Sepczuk]PW[sai17]SZ[11]RE[W]GC[ game #2416573]SO[https://www.littlegolem.net];W[cb];B[dh];W[ih];B[ij];W[hj];B[hd];W[bi];B[di];W[bj];B[de];W[ie];B[hc];W[ee];B[ff];W[resign])
 
-(;FF[4]EV[hex.cv.HEX11.5.1.1]PB[JKB]PW[Daniel Sepczuk]SZ[11]GC[ game #2416572]SO[https://www.littlegolem.net];W[cb];B[dh];W[bh];B[ge];W[hg];B[hh];W[ig];B[de];W[jd];B[jc];W[id];B[hf];W[je];B[jf];W[if];B[ih];W[gh];B[fj];W[eh];B[hc];W[ic];B[hb];W[jb];B[di])
+(;FF[4]EV[hex.cv.HEX11.5.1.1]PB[JKB]PW[Daniel Sepczuk]SZ[11]RE[W]GC[ game #2416572]SO[https://www.littlegolem.net];W[cb];B[dh];W[bh];B[ge];W[hg];B[hh];W[ig];B[de];W[jd];B[jc];W[id];B[hf];W[je];B[jf];W[if];B[ih];W[gh];B[fj];W[eh];B[hc];W[ic];B[hb];W[jb];B[di];W[resign])
 
 (;FF[4]EV[hex.cv.HEX11.5.1.1]PB[Daniel Sepczuk]PW[Kevin O'Gorman]SZ[11]RE[B]GC[ game #2416571]SO[https://www.littlegolem.net];W[cb];B[dh];W[ih];B[ii];W[jh];B[ij];W[hi];B[ge];W[bh];B[ef];W[dg];B[eg];W[ch];B[de];W[hd];B[he];W[ce];B[dc];W[cf];B[bj];W[ci];B[cj];W[di];B[bd];W[id];B[ed];W[ie];B[resign])
 
@@ -2456,7 +2468,7 @@
 
 (;FF[4]EV[hex.mc.2014.mar.1.6]PB[Daniel Sepczuk]PW[David J Bush]SZ[13]RE[B]GC[ game #1622988]SO[https://www.littlegolem.net];W[mg];B[swap];W[ei];B[dc];W[dd];B[eg];W[ie];B[id];W[cd];B[dj];W[kj];B[jh];W[fg];B[ek];W[hi];B[gf];W[ff];B[hj];W[ji];B[ii];W[fk];B[fj];W[gj];B[hh];W[gi];B[fh];W[eh];B[el];W[fl];B[fi];W[gg];B[gh];W[ih];B[resign])
 
-(;FF[4]EV[hex.mc.2014.mar.1.6]PB[REARNT]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #1622985]SO[https://www.littlegolem.net];W[he];B[swap];W[jg];B[jk];W[gj];B[ie];W[ke];B[kd];W[resign])
+(;FF[4]EV[hex.mc.2014.mar.1.6]PB[Snooker Loopy]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #1622985]SO[https://www.littlegolem.net];W[he];B[swap];W[jg];B[jk];W[gj];B[ie];W[ke];B[kd];W[resign])
 
 (;FF[4]EV[hex.ch.32.1.1]PB[Tony]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #1612730]SO[https://www.littlegolem.net];W[ll];B[ie];W[ei];B[dc];W[bc];B[bd];W[ge];B[gf];W[eg];B[ff];W[he];B[hf];W[ef];B[fe];W[ee];B[fd];W[ed];B[gc];W[jf];B[hg];W[resign])
 
@@ -3658,7 +3670,7 @@
 
 (;FF[4]EV[hex.rt.2007.10.4]PB[FruG0]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #812343]SO[https://www.littlegolem.net])
 
-(;FF[4]EV[hex.mc.2007.dec.1.8]PB[Daniel Sepczuk]PW[Gregorlo]SZ[13]RE[B]GC[ game #812285]SO[https://www.littlegolem.net];W[mf];B[gg];W[de];B[kk];W[fh];B[fg];W[dh];B[dj];W[ei];B[ek];W[ej];B[gh];W[gi];B[dg];W[eg];B[ef];W[hh];B[dl];W[ci];B[ck];W[gj];B[gk];W[ij];B[hl];W[jk];B[im];W[gl];B[hc];W[jd];B[if];W[ff];B[id];W[cf];B[bh];W[gd];B[gc];W[fd];B[eb];W[dd];B[ec];W[cc];B[resign])
+(;FF[4]EV[hex.mc.2007.dec.1.8]PB[Daniel Sepczuk]PW[Gregorio Morales]SZ[13]RE[B]GC[ game #812285]SO[https://www.littlegolem.net];W[mf];B[gg];W[de];B[kk];W[fh];B[fg];W[dh];B[dj];W[ei];B[ek];W[ej];B[gh];W[gi];B[dg];W[eg];B[ef];W[hh];B[dl];W[ci];B[ck];W[gj];B[gk];W[ij];B[hl];W[jk];B[im];W[gl];B[hc];W[jd];B[if];W[ff];B[id];W[cf];B[bh];W[gd];B[gc];W[fd];B[eb];W[dd];B[ec];W[cc];B[resign])
 
 (;FF[4]EV[hex.mc.2007.dec.1.8]PB[Marina]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #812284]SO[https://www.littlegolem.net];W[ck];B[swap];W[ge];B[ed];W[hc];B[gg];W[fg];B[fh];W[ci];B[di];W[cj];B[dh];W[if];B[jd];W[he];B[ig];W[hg];B[gi];W[ke];B[ih];W[lf];B[jf];W[je];B[kh];W[ch];B[dg];W[resign])
 
@@ -3776,7 +3788,7 @@
 
 (;FF[4]EV[null]PB[james smith]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #746387]SO[https://www.littlegolem.net];W[mf];B[swap];W[kj];B[hf];W[de];B[eg];W[ch];B[dc];W[bc];B[bd];W[cd];B[cc];W[dd];B[ec];W[fd];B[ee];W[gf];B[gg])
 
-(;FF[4]EV[hex.mc.2007.feb.3.1]PB[Daniel Sepczuk]PW[Gregorlo]SZ[13]RE[B]GC[ game #741912]SO[https://www.littlegolem.net];W[ad];B[fh];W[ji];B[jg];W[dg];B[ed];W[hf];B[hg];W[ei];B[dk];W[cj];B[eg];W[if];B[ig];W[cf];B[dh];W[bi];B[cg];W[fg];B[eh];W[bf];B[ch];W[ah];B[resign])
+(;FF[4]EV[hex.mc.2007.feb.3.1]PB[Daniel Sepczuk]PW[Gregorio Morales]SZ[13]RE[B]GC[ game #741912]SO[https://www.littlegolem.net];W[ad];B[fh];W[ji];B[jg];W[dg];B[ed];W[hf];B[hg];W[ei];B[dk];W[cj];B[eg];W[if];B[ig];W[cf];B[dh];W[bi];B[cg];W[fg];B[eh];W[bf];B[ch];W[ah];B[resign])
 
 (;FF[4]EV[hex.mc.2007.feb.3.1]PB[_felix_]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #741911]SO[https://www.littlegolem.net];W[me];B[swap];W[jj];B[hf];W[eg];B[ed];W[fe];B[gc];W[hd];B[ge];W[gd];B[eh];W[fg];B[gh];W[fh];B[ej];W[fi];B[gj];W[ii];B[hk];W[hh];B[gi];W[hg];B[gg];W[de];B[dk];W[fj];B[el];W[dl];B[ek];W[je];B[kk];W[mk];B[il];W[lj];B[kj];W[li];B[ki];W[lh];B[kh];W[lg];B[kf];W[ld];B[me];W[al];B[bl];W[am];B[bj];W[ck];B[di];W[le];B[lf];W[kg];B[jg];W[ci];B[cj];W[dj];B[ei];W[aj];B[ak];W[if];B[jh];W[jl];B[jk];W[hl];B[ik];W[hj];B[gl];W[fl];B[fm])
 
@@ -3842,7 +3854,7 @@
 
 (;FF[4]EV[hex.mc.2007.jun.1.3]PB[Karen_R]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #725610]SO[https://www.littlegolem.net];W[di];B[swap];W[fa];B[fh];W[fm];B[fg];W[gh];B[hf];W[gl];B[dh];W[ja];B[kc];W[bi];B[cg];W[gg];B[gf];W[fi];B[ah];W[ei];B[eh];W[dg];B[ch];W[ie];B[he];W[jd];B[jc];W[bh];B[bg];W[fj];B[lb];W[ma];B[mb])
 
-(;FF[4]EV[null]PB[Daniel Sepczuk]PW[Gregorlo]SZ[13]RE[B]GC[ game #724151]SO[https://www.littlegolem.net];W[ad];B[ei];W[ji];B[jg];W[ch];B[fg];W[bj];B[bk];W[ie];B[hh];W[kg];B[kf];W[cj];B[ck];W[dj];B[dk];W[ej];B[ek];W[fj];B[gk];W[ij];B[hk];W[hi];B[ed];W[df];B[fc];W[ce];B[dc];W[bd];B[ik];W[jl];B[il];W[kj];B[resign])
+(;FF[4]EV[null]PB[Daniel Sepczuk]PW[Gregorio Morales]SZ[13]RE[B]GC[ game #724151]SO[https://www.littlegolem.net];W[ad];B[ei];W[ji];B[jg];W[ch];B[fg];W[bj];B[bk];W[ie];B[hh];W[kg];B[kf];W[cj];B[ck];W[dj];B[dk];W[ej];B[ek];W[fj];B[gk];W[ij];B[hk];W[hi];B[ed];W[df];B[fc];W[ce];B[dc];W[bd];B[ik];W[jl];B[il];W[kj];B[resign])
 
 (;FF[4]EV[hex.mc.2007.may.1.14]PB[Daniel Sepczuk]PW[Ryan]SZ[13]RE[B]GC[ game #719275]SO[https://www.littlegolem.net];W[ad];B[swap];W[fd];B[gg];W[ji];B[gi];W[jf];B[kd];W[dh];B[di];W[ig];B[ie];W[hf];B[hg];W[if];B[he];W[gf];B[fe];W[ee];B[eg];W[ge];B[hc];W[gd];B[gb];W[fb];B[resign])
 
@@ -4030,7 +4042,7 @@
 
 (;FF[4]EV[hex.mc.2006.nov.1.25]PB[isaac_isaac]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #617421]SO[https://www.littlegolem.net];W[cc];B[swap];W[dd];B[ij];W[hj];B[gg];W[eh];B[eb];W[fc];B[fe];W[cf];B[ed];W[ee];B[fd];W[ff];B[he];W[je];B[id];W[kc];B[hh];W[ih];B[ii];W[hi];B[ig];W[ec];B[de];W[ce];B[dg];W[lf];B[jg];W[ch];B[cg];W[ah];B[bg];W[ag];B[bf];W[af];B[be];W[ae];B[bc];W[ge];B[hc];W[kh];B[ke];W[resign])
 
-(;FF[4]EV[hex.rt.2006.7.160]PB[Gregorlo]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #617284]SO[https://www.littlegolem.net];W[ae];B[swap];W[hd];B[ij];W[gj];B[fh];W[ig];B[ie];W[je];B[if];W[jf];B[jd];W[lc];B[jc];W[lb];B[kd];W[ld];B[ke];W[le];B[kf];W[lf];B[jh];W[resign])
+(;FF[4]EV[hex.rt.2006.7.160]PB[Gregorio Morales]PW[Daniel Sepczuk]SZ[13]RE[W]GC[ game #617284]SO[https://www.littlegolem.net];W[ae];B[swap];W[hd];B[ij];W[gj];B[fh];W[ig];B[ie];W[je];B[if];W[jf];B[jd];W[lc];B[jc];W[lb];B[kd];W[ld];B[ke];W[le];B[kf];W[lf];B[jh];W[resign])
 
 (;FF[4]EV[hex.rt.2006.7.160]PB[Daniel Sepczuk]PW[Pablo]SZ[13]RE[B]GC[ game #617282]SO[https://www.littlegolem.net];W[me];B[swap];W[hf];B[hg];W[kj];B[jf];W[de];B[di];W[ei];B[gi];W[fi];B[dk];W[ek];B[dm];W[bl];B[bk];W[fg];B[ef];W[dl];B[id];W[ge];B[gd];W[fe];B[ed];W[hd];B[ib];W[hb];B[hc];W[fd];B[gf];W[ff];B[fh];W[eh];B[resign])
 

@@ -1,4 +1,4 @@
-with open("train_dataset_test", "r") as f:
+with open("../train_dataset_test", "r") as f:
     lines = f.readlines()
 
     documents = []
