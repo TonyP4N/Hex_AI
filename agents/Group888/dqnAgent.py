@@ -30,7 +30,7 @@ class HexAgent():
         self.colour = ""
         self.max_depth = 1  # Depth
         self.evaluation_cache = {}
-        self.model = tf.keras.models.load_model("C:/Users/32827/Documents/GitHub/Hex_AI/qlearn")
+        self.model = tf.keras.models.load_model("xxx")
         # self.search()
 
     def run(self):
