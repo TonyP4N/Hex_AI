@@ -2,7 +2,7 @@ import numpy as np
 from resistance import score
 from preprocess import *
 
-positions = preprocess("train_data/raw_games.dat")
+positions = preprocess("train_data/moveListTrain.dat")
 print ("scoring positions...")
 scores = np.empty((positions.shape[0],boardsize,boardsize))
 num_positions = positions.shape[0]
