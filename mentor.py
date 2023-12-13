@@ -1,155 +1,77 @@
-import theano
-import time
-from lasagne.updates import rmsprop
-from theano import tensor as T
+import tensorflow as tf
 import numpy as np
-import numpy.random as rand
-from inputFormat import *
-from small_network import network
-import matplotlib.pyplot as plt
-import six.moves.cPickle as cPickle
-import argparse
 import os
-
-def save():
-	print ("saving network...")
-	if args.save:
-		save_name = args.save
-	else:
-		save_name = ("mentor_network.save")
-	if args.data:
-		f = open(args.data+"/"+save_name, 'wb')
-	else:
-		f = open(save_name, 'wb')
-	cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
-	f.close()
-	if args.data:
-		f = open(args.data+"/costs.save","wb")
-		cPickle.dump(costs, f, protocol=cPickle.HIGHEST_PROTOCOL)
-		f.close()
-
+import matplotlib.pyplot as plt
+import argparse
+import time
+from small_network import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--load", "-l", type=str, help="Specify a file with a prebuilt network to load.")
 parser.add_argument("--save", "-s", type=str, help="Specify a file to save trained network to.")
-parser.add_argument("--data", "-d", type =str, help="Specify a directory to save/load data for this run.")
+parser.add_argument("--data", "-d", type=str, help="Specify a directory to save/load data for this run.")
 args = parser.parse_args()
 
-print ("loading data... ")
-datafile = open("train_data/scoredPositionsFull.npz", 'rb')
-data = np.load(datafile)
-positions = data['positions']
-scores = data['scores']
-
-if args.data:
-	if not os.path.exists(args.data):
-		os.makedirs(args.data)
-		costs = []
-	else:
-		if os.path.exists(args.data+"/costs.save"):
-			f = open(args.data+"/costs.save")
-			costs = cPickle.load(f)
-			f.close
-		else:
-			costs = []
-else:
-	costs = []
-		
-datafile.close()
-
-positions = positions.astype(theano.config.floatX)
-scores = scores.astype(theano.config.floatX)
+# Load Data
+print("Loading data... ")
+datafile = np.load("train_data/scoredPositionsFull.npz")
+positions = datafile['positions'].astype(np.float32)
+scores = datafile['scores'].astype(np.float32)
+print(positions.shape)
+print(scores.shape)
 n_train = scores.shape[0]
 
-positions_batch = T.tensor4('positions_batch')
-y = T.tensor3('y') #target output score
-
-numEpochs = 100
-iteration = 0
+# Prepare Data for Training
 batch_size = 64
-numBatches = n_train//batch_size
+dataset = tf.data.Dataset.from_tensor_slices((positions, scores))
+dataset = dataset.shuffle(buffer_size=1024).batch(batch_size)
 
-#if load parameter is passed load a network from a file
+# Initialize or Load Network
 if args.load:
-	print ("loading model...")
-	f = open(args.load, 'rb')
-	network = cPickle.load(f)
-	if(network.batch_size):
-		batch_size = network.batch_size
-	f.close()
+    print("Loading model...")
+    network = tf.keras.models.load_model(args.load)
 else:
-	print ("building model...")
-	#use batchsize none now so that we can easily use same network for picking single moves and evaluating batches
-	network = network(batch_size=None)
+    print("Building model...")
+    boardsize = 11  # Replace with your board size
+    network = Network()  # Adapt parameters
 
-cost = T.mean(T.sqr(network.output.reshape((batch_size, boardsize, boardsize)) - y))
+# Compile the Model
+network.compile(optimizer='rmsprop', loss='mean_squared_error')
 
-alpha = 0.001
-rho = 0.9
-epsilon = 1e-6
-updates = rmsprop(cost, network.params, alpha, rho, epsilon)
-
-train_model = theano.function(
-    [positions_batch, y],
-    cost,
-    updates = updates,
-    givens={
-        network.input: positions_batch,
-    }
-)
-
-test_model = theano.function(
-    [positions_batch, y],
-    cost,
-    givens={
-        network.input: positions_batch,
-    }
-)
-
-evaluate_model = theano.function(
-	[positions_batch],
-	network.output,
-	givens={
-        network.input: positions_batch,
-    }
-)
-
+# Training Loop
+num_epochs = 100
 costs = []
-
-print ("Training model on mentor set...")
-indices = np.arange(n_train)
-print(indices)
+print("Training model on mentor set...")
 try:
-	for epoch in range(numEpochs):
-		print ("epoch: ",epoch)
-		np.random.shuffle(indices)
-		cost_sum = 0
-		for batch in range(numBatches):
-			t = time.clock()
-			p_batch = positions[indices[batch*batch_size:(batch+1)*batch_size]]
-			s_batch = scores[indices[batch*batch_size:(batch+1)*batch_size]]
-			cost=train_model(p_batch, s_batch)
-			run_time = time.clock()-t
-			cost_sum+=cost
-			iteration+=1
-			print("Cost: ",cost_sum/(batch+1), " Time per position: ", run_time/(batch_size))
-		costs.append(cost_sum/(batch+1))
-		plt.plot(costs)
-		plt.ylabel('cost')
-		plt.xlabel('epoch')
-		plt.draw()
-		plt.pause(0.001)
-		#save snapshot of network every epoch in case something goes wrong
-		save()
+    for epoch in range(num_epochs):
+        print("Epoch: ", epoch)
+        epoch_cost = 0
+        for batch, (p_batch, s_batch) in enumerate(dataset):
+            t = time.time()
+            cost = network.train_on_batch(p_batch, s_batch)
+            epoch_cost += cost
+            run_time = time.time() - t
+            print("Cost: ", epoch_cost / (batch + 1), " Time per position: ", run_time / batch_size)
+        costs.append(epoch_cost / (batch + 1))
+
+        # Plotting
+        plt.plot(costs)
+        plt.ylabel('Cost')
+        plt.xlabel('Epoch')
+        plt.draw()
+        plt.pause(0.001)
+
+        # Save the network
+        if args.save:
+            network.save(args.save)
+
 except KeyboardInterrupt:
-	#save snapshot of network if we interrupt so we can pickup again later
-	save()
-	exit(1)
+    # Save on interrupt
+    if args.save:
+        network.save(args.save)
 
+# Final Save
+if args.save:
+    network.save(args.save)
 
-print ("done training!")
-
-save()
-
-cPickle.dump(network, f, protocol=cPickle.HIGHEST_PROTOCOL)
-f.close()
+print("Done training!")

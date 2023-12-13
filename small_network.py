@@ -1,184 +1,75 @@
-import theano
-from theano import tensor as T
 import numpy as np
 from inputFormat import *
-from layers import *
-import pickle as cPickle
+import tensorflow as tf
+from tensorflow.keras import layers
 
 
-class network:
-	def __init__(self, batch_size = 1, rng = None, load_file = None):
-		if(not rng): rng = np.random.RandomState(None)
-		self.input = T.tensor4('input') #position matrix
-		self.batch_size = batch_size
-		layer0_D3 = 12
-		layer0_D5 = 20
+class Network(tf.keras.Model):
+	def __init__(self, output_dim=(11, 11)):
+		super().__init__()
+		# Convolutional layers
+		self.conv1 = layers.Conv2D(32, (3, 3), activation='relu', padding='same')
+		self.conv2 = layers.Conv2D(64, (3, 3), activation='relu', padding='same')
+		self.conv3 = layers.Conv2D(128, (3, 3), activation='relu', padding='same')
+		
+		# Flattening and Dense layers
+		self.flatten = layers.Flatten()
+		self.dense1 = layers.Dense(1024, activation='relu')
+		
+		# Output layer
+		self.dense2 = layers.Dense(output_dim[0] * output_dim[1])
 
-		layer0 = HexConvLayer(
-			rng,
-			self.input, 
-			(batch_size, num_channels, input_size, input_size), 
-			layer0_D5, 
-			layer0_D3
+	def call(self, inputs):
+		x = self.conv1(inputs)
+		x = self.conv2(x)
+		x = self.conv3(x)
+		x = self.flatten(x)
+		x = self.dense1(x)
+		x = self.dense2(x)
+
+		# Reshaping the output to the desired shape
+		return tf.reshape(x, [-1, *(11, 11)])
+
+class PolicyNetwork(tf.keras.Model):
+	def __init__(self, num_channels, input_size, boardsize, batch_size=1):
+		super().__init__()
+		self.layer0 = HexConvLayer(20, 12)
+		self.layer1 = HexConvLayer(16, 16)
+		self.layer2 = HexConvLayer(12, 20)
+		self.layer3 = HexConvLayer(8, 24)
+		self.layer4 = HexConvLayer(4, 28)
+		self.layer5 = HexConvLayer(0, 32)
+		self.layer6 = tf.keras.layers.Dense(boardsize * boardsize)
+
+	def call(self, inputs):
+		x = self.layer0(inputs)
+		x = self.layer1(x)
+		x = self.layer2(x)
+		x = self.layer3(x)
+		x = self.layer4(x)
+		x = self.layer5(x)
+		x = tf.reshape(x, [self.batch_size, -1])  # Flatten
+		x = self.layer6(x)
+
+
+		x = tf.reshape(x, [self.batch_size, -1])
+		x = self.layer6(x)
+
+		# Assume 'inputs' has shape [batch_size, num_channels, board_height, board_width]
+		# Define the 'not_played' mask
+		white, black = 0, 1  # indices for white and black channels
+		not_played = tf.logical_and(
+			tf.equal(inputs[:, white, :, :], 0),
+			tf.equal(inputs[:, black, :, :], 0)
 		)
 
-		layer1_D3 = 16
-		layer1_D5 = 16
+		# Flatten 'not_played' to match the output shape
+		not_played_flat = tf.reshape(not_played, [self.batch_size, -1])
 
-		layer1 = HexConvLayer(
-			rng,
-			layer0.output,
-			(batch_size, layer0_D3+layer0_D5, input_size, input_size),
-			layer1_D5,
-			layer1_D3
-		)
+		# Apply mask to the network's output
+		masked_output = tf.where(not_played_flat, x, tf.fill(tf.shape(x), -np.inf))
 
-		layer2_D3 = 20
-		layer2_D5 = 12
+		# Apply softmax to the masked output
+		playable_output = tf.nn.softmax(masked_output)
 
-		layer2 = HexConvLayer(
-			rng,
-			layer1.output,
-			(batch_size, layer1_D3+layer1_D5, input_size, input_size),
-			layer2_D5,
-			layer2_D3
-		)
-
-		layer3_D3 = 24
-		layer3_D5 = 8
-
-		layer3 = HexConvLayer(
-			rng,
-			layer2.output,
-			(batch_size, layer2_D3+layer2_D5, input_size, input_size),
-			layer3_D5,
-			layer3_D3
-		)
-
-		layer4_D3 = 28
-		layer4_D5 = 4
-
-		layer4 = HexConvLayer(
-			rng,
-			layer3.output,
-			(batch_size, layer3_D3+layer3_D5, input_size, input_size),
-			layer4_D5,
-			layer4_D3
-		)
-
-		layer5_D3 = 32
-		layer5_D5 = 0
-
-		layer5 = HexConvLayer(
-			rng,
-			layer4.output,
-			(batch_size, layer4_D3+layer4_D5, input_size, input_size),
-			layer5_D5,
-			layer5_D3
-		)
-
-
-		layer6 = SigmoidLayer(
-		 	rng,
-		 	input = layer5.output.flatten(2),
-		 	n_in = (layer5_D3+layer5_D5)*input_size*input_size,
-		 	n_out = boardsize*boardsize
-		)
-
-		self.output = 2*layer6.output-1
-
-		self.params = layer0.params + layer1.params + layer2.params +layer3.params + layer4.params + layer5.params + layer6.params
-		self.mem_size = layer1.mem_size + layer2.mem_size + layer3.mem_size + layer4.mem_size + layer5.mem_size + layer6.mem_size
-
-
-class policy_network:
-	def __init__(self, batch_size = None, rng = None, load_file = None, params = None):
-		if(not rng): rng = np.random.RandomState(None)
-		self.input = T.tensor4('input') #position matrix
-		self.batch_size = batch_size
-		layer0_D3 = 12
-		layer0_D5 = 20
-
-		layer0 = HexConvLayer(
-			rng,
-			self.input, 
-			(batch_size, num_channels, input_size, input_size), 
-			layer0_D5, 
-			layer0_D3
-		)
-
-		layer1_D3 = 16
-		layer1_D5 = 16
-
-		layer1 = HexConvLayer(
-			rng,
-			layer0.output,
-			(batch_size, layer0_D3+layer0_D5, input_size, input_size),
-			layer1_D5,
-			layer1_D3
-		)
-
-		layer2_D3 = 20
-		layer2_D5 = 12
-
-		layer2 = HexConvLayer(
-			rng,
-			layer1.output,
-			(batch_size, layer1_D3+layer1_D5, input_size, input_size),
-			layer2_D5,
-			layer2_D3
-		)
-
-		layer3_D3 = 24
-		layer3_D5 = 8
-
-		layer3 = HexConvLayer(
-			rng,
-			layer2.output,
-			(batch_size, layer2_D3+layer2_D5, input_size, input_size),
-			layer3_D5,
-			layer3_D3
-		)
-
-		layer4_D3 = 28
-		layer4_D5 = 4
-
-		layer4 = HexConvLayer(
-			rng,
-			layer3.output,
-			(batch_size, layer3_D3+layer3_D5, input_size, input_size),
-			layer4_D5,
-			layer4_D3
-		)
-
-		layer5_D3 = 32
-		layer5_D5 = 0
-
-		layer5 = HexConvLayer(
-			rng,
-			layer4.output,
-			(batch_size, layer4_D3+layer4_D5, input_size, input_size),
-			layer5_D5,
-			layer5_D3
-		)
-
-		layer6 = FullyConnectedLayer(
-		 	rng,
-		 	layer5.output.flatten(2),
-		 	(layer5_D3+layer5_D5)*input_size*input_size,
-		 	boardsize*boardsize,
-		 	params[30:32] if params else None
-		)
-
-		not_played = T.and_(T.eq(self.input[:, white, padding:boardsize+padding, padding:boardsize+padding].flatten(2),0),\
-		      	T.eq(self.input[:, black, padding:boardsize+padding, padding:boardsize+padding].flatten(2),0))
-
-		playable_output = T.nnet.softmax(layer6.output[not_played.nonzero()])
-
-		output = T.switch(not_played, layer6.output, -1*np.inf)
-
-		self.output = T.nnet.softmax(output)
-
-		self.params = layer0.params + layer1.params + layer2.params + layer3.params + layer4.params + layer5.params + layer6.params
-
-		self.mem_size = layer1.mem_size+layer2.mem_size+layer3.mem_size+layer4.mem_size+layer5.mem_size+layer6.mem_size
+		return playable_output

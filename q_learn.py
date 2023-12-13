@@ -1,68 +1,44 @@
-from __future__ import absolute_import
-from __future__ import print_function
-import theano
-from lasagne.updates import rmsprop
-from theano import tensor as T
+import tensorflow as tf
 import numpy as np
-import numpy.random as rand
-from inputFormat import *
-from network import network
+import os
 import matplotlib.pyplot as plt
-import six.moves.cPickle
 import argparse
 import time
-import os
-from six.moves import range
+import pickle
+from small_network import *
 
 def save():
 	print("saving network...")
 	if args.save:
 		save_name = args.save
 	else:
-		save_name = "Q_network.save"
+		save_name = "Q_network"
+	network.save(save_name)
 	if args.data:
-		f = open(args.data+"/"+save_name, 'wb')
-	else:
-		f = open(save_name, 'wb')
-	six.moves.cPickle.dump(network, f, protocol=six.moves.cPickle.HIGHEST_PROTOCOL)
-	f.close()
-	if args.data:
-		f = open(args.data+"/replay_mem.save", 'wb')
-		six.moves.cPickle.dump(mem, f, protocol=six.moves.cPickle.HIGHEST_PROTOCOL)
+		f = open(args.data+"/replay_mem.save", 'w')
+		pickle.dump(mem, f, protocol=pickle.HIGHEST_PROTOCOL)
 		f.close()
-		f = open(args.data+"/costs.save","wb")
-		six.moves.cPickle.dump(costs, f, protocol=six.moves.cPickle.HIGHEST_PROTOCOL)
+		f = open(args.data+"/costs.save","w")
+		pickle.dump(costs, f, protocol=pickle.HIGHEST_PROTOCOL)
 		f.close()
-		f = open(args.data+"/values.save","wb")
-		six.moves.cPickle.dump(values, f, protocol=six.moves.cPickle.HIGHEST_PROTOCOL)
+		f = open(args.data+"/values.save","w")
+		pickle.dump(values, f, protocol=pickle.HIGHEST_PROTOCOL)
 		f.close()
-
-def snapshot():
-	if not args.data:
-		return
-	print("saving network snapshot...")
-	index = 0
-	save_name = args.data+"/snapshot_"+str(index)+".save"
-	while os.path.exists(save_name):
-		index+=1
-		save_name = args.data+"/snapshot_"+str(index)+".save"
-	f = open(save_name, 'wb')
-	six.moves.cPickle.dump(network, f, protocol=six.moves.cPickle.HIGHEST_PROTOCOL)
-	f.close()
 
 def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0)) 
     return (cumsum[N:] - cumsum[:-N]) / N 
 
 def show_plots():
+	print(costs)
 	plt.figure(0)
-	plt.plot(running_mean(costs,200))
+	plt.plot(costs)
 	plt.ylabel('cost')
 	plt.xlabel('episode')
 	plt.draw()
 	plt.pause(0.001)
 	plt.figure(1)
-	plt.plot(running_mean(values,200))
+	plt.plot(values)
 	plt.ylabel('value')
 	plt.xlabel('episode')
 	plt.draw()
@@ -73,9 +49,21 @@ def epsilon_greedy_policy(state, evaluator):
 	played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
 		      state[black,padding:boardsize+padding,padding:boardsize+padding]).flatten()
 	if(rand>epsilon_q):
-		scores = evaluator(state)
+		state = tf.convert_to_tensor(state, dtype=tf.float32)
+		scores = evaluator(tf.expand_dims(state, axis=0))
 		#set value of played cells impossibly low so they are never picked
-		scores[played] = -2
+		played_indices = np.where(played)[0]//11
+		played_indices2 = np.where(played)[0]%11
+		# print(played_indices)
+		# print(played_indices2)
+		# Assuming 'scores' is your TensorFlow tensor
+		scores = scores.numpy()  # Convert to NumPy array
+		# print(scores.shape)
+		# Assuming 'played_indices' is an array of indices where you want to set values to -2
+		for x in range(len(played_indices)):
+            self.scores[0][played_indices[x]][played_indices2[x]] = -2
+
+		# Convert back to TensorFlow tensor
 		#np.set_printoptions(precision=3, linewidth=100)
 		#print scores.max()
 		return scores.argmax(), scores.max()
@@ -103,23 +91,44 @@ def softmax_policy(state, evaluator, temperature=1):
 			break
 	return not_played.nonzero()[0][choice], scores.max()
 
-def get_outcome(game):
-	"""play out game to finish using greedy policy and return the winner"""
-	pass
-
-
-def Q_update():
+def Q_update(network, optimizer, mem, batch_size):
 	states1, actions, rewards, states2 = mem.sample_batch(batch_size)
-	scores = evaluate_model_batch(states2)
-	played = np.logical_or(states2[:,white,padding:boardsize+padding,padding:boardsize+padding],\
-		     states2[:,black,padding:boardsize+padding,padding:boardsize+padding]).reshape(scores.shape)
-	#set value of played cells impossibly low so they are never picked
-	scores[played] = -2
-	targets = np.zeros(rewards.size).astype(theano.config.floatX)
-	targets[rewards==1] = 1
-	targets[rewards==0] = -np.amax(scores, axis=1)[rewards==0]
-	cost = train_model(states1,targets,actions)
-	return cost
+
+	# Convert data to TensorFlow tensors
+	states1 = tf.convert_to_tensor(states1, dtype=tf.float32)
+	actions = tf.convert_to_tensor(actions, dtype=tf.int32)
+	rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
+	states2 = tf.convert_to_tensor(states2, dtype=tf.float32)
+	# Forward pass for the next states
+	future_scores = network(states2, training=False)
+
+	# Custom logic for played states
+	played = np.logical_or(states2[:, white, padding:boardsize+padding, padding:boardsize+padding],
+							states2[:, black, padding:boardsize+padding, padding:boardsize+padding])
+	future_scores = tf.where(played, -2 * tf.ones_like(future_scores), future_scores)
+
+	# Assuming 'rewards' is a 1D tensor of shape [batch_size]
+	batch_size = tf.shape(rewards)[0]
+
+	# Create a tensor of ones with the same shape as the result of the 'else' clause
+	then_tensor = tf.fill([batch_size], 1.0)
+
+	# Now use these in the tf.where function
+	targets = tf.where(rewards == 1, then_tensor, -tf.reduce_max(-tf.reduce_max(future_scores, axis=1),-1))
+
+	# Train step
+	with tf.GradientTape() as tape:
+		predictions = network(states1, training=True)
+		actions_taken = tf.one_hot(actions, depth=predictions.shape[-1])
+		actions_taken_expanded = tf.expand_dims(actions_taken, -1)
+		q_values = tf.reduce_sum(tf.reduce_sum(predictions * actions_taken_expanded, axis=1),axis=1)
+		# q_values = tf.reduce_sum(predictions * actions_taken, axis=0)
+		loss = tf.reduce_mean(tf.square(q_values - targets))
+
+	gradients = tape.gradient(loss, network.trainable_variables)
+	optimizer.apply_gradients(zip(gradients, network.trainable_variables))
+
+	return loss
 
 def action_to_cell(action):
 	cell = np.unravel_index(action, (boardsize,boardsize))
@@ -167,22 +176,16 @@ parser.add_argument("--data", "-d", type =str, help="Specify a directory to save
 args = parser.parse_args()
 
 #save network every x minutes during training
-save_time = 60
+save_time = 5
 #save snapshot of network to unique file every x minutes during training
-snapshot_time = 240
+snapshot_time = 10
 
 print("loading starting positions... ")
-datafile = open("train_data/scoredPositionsFull.npz", 'r')
+datafile = open("train_data/scoredPositionsFull.npz", 'rb')
 data = np.load(datafile)
 positions = data['positions']
 datafile.close()
 numPositions = len(positions)
-
-input_state = T.tensor3('input_state')
-
-state_batch = T.tensor4('state_batch')
-target_batch = T.dvector('target_batch')
-action_batch = T.ivector('action_batch')
 
 replay_capacity = 100000
 
@@ -196,20 +199,20 @@ if args.data:
 		if os.path.exists(args.data+"/replay_mem.save"):
 			print("loading replay memory...")
 			f = open(args.data+"/replay_mem.save")
-			mem = six.moves.cPickle.load(f)
+			mem = pickle.load(f)
 			f.close
 		else:
 			#replay memory from which updates are drawn
 			mem = replay_memory(replay_capacity)
 		if os.path.exists(args.data+"/costs.save"):
 			f = open(args.data+"/costs.save")
-			costs = six.moves.cPickle.load(f)
+			costs = pickle.load(f)
 			f.close
 		else:
 			costs = []
 		if os.path.exists(args.data+"/values.save"):
 			f = open(args.data+"/values.save")
-			values = six.moves.cPickle.load(f)
+			values = pickle.load(f)
 			f.close
 		else:
 			values = []
@@ -219,59 +222,24 @@ else:
 	costs = []
 	values = []
 
+if args.load:
+    print("Loading model...")
+    network = tf.keras.models.load_model(args.load)
+else:
+    print("Building model...")
+    boardsize = 11  # Replace with your board size
+    network = Network()  # Adapt parameters
+
+
 numEpisodes = 20
 batch_size = 64
+optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.001)
 
-#if load parameter is passed load a network from a file
-if args.load:
-	print("loading model...")
-	f = open(args.load, 'rb')
-	network = six.moves.cPickle.load(f)
-	if(network.batch_size):
-		batch_size = network.batch_size
-	f.close()
-else:
-	print("building model...")
-	#use batchsize none now so that we can easily use same network for picking single moves and evaluating batches
-	network = network(batch_size=None)
-	print("network size: "+str(network.mem_size.eval()))
-
-evaluate_model_single = theano.function(
-	[input_state],
-	network.output[0],
-	givens={
-        network.input: input_state.dimshuffle('x', 0, 1, 2),
-	}
-)
-
-evaluate_model_batch = theano.function(
-	[state_batch],
-	network.output,
-	givens={
-        network.input: state_batch,
-	}
-)
-
-cost = T.mean(T.sqr(network.output[T.arange(target_batch.shape[0]),action_batch] - target_batch))
-
-alpha = 0.001
-rho = 0.9
-epsilon = 1e-6
-updates = rmsprop(cost, network.params, alpha, rho, epsilon)
-
-train_model = theano.function(
-	[state_batch,target_batch,action_batch],
-	cost,
-	updates = updates,
-	givens={
-		network.input: state_batch,
-	}
-)
 
 print("Running episodes...")
 epsilon_q = 0.1
-last_save = time.clock()
-last_snapshot = time.clock()
+last_save = time.process_time()
+last_snapshot = time.process_time()
 show_plots()
 try:
 	for i in range(numEpisodes):
@@ -288,9 +256,9 @@ try:
 		else:
 			gameW = flip_game(positions[index])
 		gameB = mirror_game(gameW)
-		t = time.clock()
+		t = time.process_time()
 		while(winner(gameW)==None):
-			action, value = epsilon_greedy_policy(gameW if move_parity else gameB, evaluate_model_single)
+			action, value = epsilon_greedy_policy(gameW if move_parity else gameB, network)
 			value_sum+=abs(value)
 			state1 = np.copy(gameW if move_parity else gameB)
 			move_cell = action_to_cell(action)
@@ -310,17 +278,18 @@ try:
 			move_parity = not move_parity
 			mem.add_entry(state1, action, reward, state2)
 			if(mem.size > batch_size):
-				cost += Q_update()
+				cost += Q_update(network,optimizer,mem,batch_size).numpy()
+
 				#print state_string(gameW)
 			num_step += 1
-			if(time.clock()-last_save > 60*save_time):
+			if(time.process_time()-last_save > 60*save_time):
 				save()
 				show_plots()
-				last_save = time.clock()
-			if(time.clock()-last_snapshot > 60*snapshot_time):
-				snapshot()
-				last_snapshot = time.clock()
-		run_time = time.clock() - t
+				last_save = time.process_time()
+			if(time.process_time()-last_snapshot > 60*snapshot_time):
+				save()
+				last_snapshot = time.process_time()
+		run_time = time.process_time() - t
 		print("Episode", i, "complete, cost: ", 0 if num_step == 0 else cost/num_step, " Time per move: ", 0 if num_step == 0 else run_time/num_step, "Average value magnitude: ", 0 if num_step == 0 else value_sum/num_step)
 		costs.append(0 if num_step == 0 else cost/num_step)
 		values.append(0 if num_step == 0 else value_sum/num_step)

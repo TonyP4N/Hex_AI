@@ -1,6 +1,10 @@
 import socket
 from random import choice
 from time import sleep
+import tensorflow as tf
+import sys
+sys.path.append("..")
+from inputFormat import *
 
 import numpy as np
 from keras.models import Sequential
@@ -25,40 +29,16 @@ class HexAgent():
         self.colour = ""
         self.max_depth = 1  # Depth
         self.evaluation_cache = {}
-
-        # 定义模型相关的属性
-        self.state_size = board_size * board_size
-        self.action_size = board_size * board_size
-        self.gamma = 0.95  # discount rate
-        self.epsilon = 0.8  # exploration rate
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
-        self.learning_rate = 0.001
-        self.previousState = []
-        self.randnum = 0
-        self.prednum = 0
+        self.model = tf.keras.models.load_model("C:/Users/32827/Documents/GitHub/Hex_AI/qlearn")
+        # self.search()
 
         # 创建模型
-        self.model = self._build_model()
-
-        # 使用随机数据通过模型，以便创建权重
-        dummy_input = np.zeros((1, self.state_size))
-        self.model.predict(dummy_input)
-
-        # 现在加载权重
-        self.model.load_weights("C:/Users/adminstor/Desktop/COMP34111_g60486zz/agents/agent1_weights.h5")
-
-    def load(self, name):
-        self.model.load_weights(name)
 
     def _build_model(self):
         # Neural Net for Deep-Q learning Model
-        model = Sequential()
-        model.add(Dense(128, input_dim=self.state_size, activation='relu'))
-        model.add(Dense(128, activation='relu'))
-        model.add(Dense(self.action_size, activation='linear'))
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        model = tf.keras.models.load_model("C:/Users/32827/Documents/GitHub/Hex_AI/qlearn")
         return model
+    
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
 
@@ -88,6 +68,7 @@ class HexAgent():
                     [0]*self.board_size for i in range(self.board_size)]
 
                 if self.colour == "R":
+                    self.search()
                     self.make_move()
 
             elif s[0] == "END":
@@ -100,46 +81,88 @@ class HexAgent():
                 elif s[1] == "SWAP":
                     self.colour = self.opp_colour()
                     if s[3] == self.colour:
+                        self.search()
                         self.make_move()
 
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour()
-
+                    self.search()
                     self.make_move()
 
         return False
+    
+    def stateToInput(self):
+        board = self.board
+        ret = new_game(len(board))
+        padding = (input_size - len(board)+1)//2
+        for i in range(len(board)):
+            for j in range(len(board)):
+                if board[i][j] == 'R':
+                    play_cell(ret, (i+padding,j+padding), white)
+                elif board[i][j] == 'B':
+                    play_cell(ret, (i+padding,j+padding), black)
+        return ret
 
-    def board_to_input(self):
-        """将当前棋盘转换为模型输入。"""
-        flat_board = np.array(self.board).flatten()
-        input_board = np.where(flat_board == 'R', 1, flat_board)
-        input_board = np.where(input_board == 'B', -1, input_board)
-        input_board = np.where(input_board == 0, 0, input_board)
-        return np.array(input_board, dtype='float32').reshape((1, -1))
+    def search(self, time_budget = 1):
+        """
+        Compute resistance for all moves in current state.
+        """
+        state = self.stateToInput()
+        #get equivalent white to play game if black to play
+        # toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
+        # if(toplay == black):
+        #     state = mirror_game(state)
+        played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
+        state[black,padding:boardsize+padding,padding:boardsize+padding]).flatten()
+        state = tf.convert_to_tensor(state, dtype=tf.float32)
+        self.scores = self.model(tf.expand_dims(state, axis=0))
+        #set value of played cells impossibly low so they are never picked
+        played_indices = np.where(played)[0]//11
+        played_indices2 = np.where(played)[0]%11
+        # print(played_indices)
+        # print(played_indices2)
+        # Assuming 'scores' is your TensorFlow tensor
+        self.scores = self.scores.numpy()  # Convert to NumPy array
+        #set value of played cells impossibly low so they are never picked
+        for x in range(len(played_indices)):
+            self.scores[0][played_indices[x]][played_indices2[x]] = -2
+
+    # def board_to_input(self):
+    #     """将当前棋盘转换为模型输入。"""
+    #     flat_board = np.array(self.board).flatten()
+    #     input_board = np.where(flat_board == 'R', 1, flat_board)
+    #     input_board = np.where(input_board == 'B', -1, input_board)
+    #     input_board = np.where(input_board == 0, 0, input_board)
+    #     return np.array(input_board, dtype='float32').reshape((1, -1))
 
     def make_move(self):
         """使用训练好的模型来选择最佳移动。"""
-        current_state = self.board_to_input()
-        q_values = self.model.predict(current_state)[0]
+        move = np.unravel_index(self.scores.argmax(), (boardsize,boardsize))
+		#correct move for smaller boardsizes
+		#flip returned move if black to play to get move in actual game
+        self.execute_move(move)
+        # current_state = self.board_to_input()
+        # q_values = self.model.predict(current_state)[0]
 
-        # 将Q值最高的动作转换为棋盘上的位置
-        possible_moves = self.get_possible_moves()
-        best_move = None
-        max_q_value = -float('inf')
-        for move in possible_moves:
-            idx = move[0] * self.board_size + move[1]
-            if q_values[idx] > max_q_value:
-                max_q_value = q_values[idx]
-                best_move = move
+        # # 将Q值最高的动作转换为棋盘上的位置
+        # possible_moves = self.get_possible_moves()
+        # best_move = None
+        # max_q_value = -float('inf')
+        # for move in possible_moves:
+        #     idx = move[0] * self.board_size + move[1]
+        #     if q_values[idx] > max_q_value:
+        #         max_q_value = q_values[idx]
+        #         best_move = move
 
-        if best_move:
-            self.execute_move(best_move)
-        else:
-            print("No valid move found!")
+        # if best_move:
+        #     self.execute_move(best_move)
+        # else:
+        #     print("No valid move found!")
 
 
     def execute_move(self, move):
+        print(move)
         self.board[move[0]][move[1]] = self.colour
         self.s.sendall(bytes(f"{move[0]},{move[1]}\n", "utf-8"))
 
