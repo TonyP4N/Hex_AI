@@ -24,7 +24,7 @@ MsgFlag = driver.find_element(By.XPATH,
                               "/html/body/div[1]/form/table/tbody/tr/td[5]/table/tbody/tr[9]/td/table/tbody/tr[3]/td/input")
 
 moveList = []
-itr_num = 4
+itr_num = 100
 
 def is_ended():
     if "has won !" in MsgLoc.get_attribute("value"):
@@ -65,7 +65,7 @@ for i in tqdm(range(itr_num)):
     time.sleep(3)
 
 
-with open("moveListTrain.txt", "a") as f:
+with open("train_data/moveListTrain.txt", "a") as f:
     for item in moveList:
         f.write("%s\n" % item)
 
