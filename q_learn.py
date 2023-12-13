@@ -61,7 +61,7 @@ def epsilon_greedy_policy(state, evaluator):
 		# print(scores.shape)
 		# Assuming 'played_indices' is an array of indices where you want to set values to -2
 		for x in range(len(played_indices)):
-            self.scores[0][played_indices[x]][played_indices2[x]] = -2
+			scores[0][played_indices[x]][played_indices2[x]] = -2
 
 		# Convert back to TensorFlow tensor
 		#np.set_printoptions(precision=3, linewidth=100)
@@ -70,26 +70,6 @@ def epsilon_greedy_policy(state, evaluator):
 	#choose random open cell
 	return np.random.choice(np.arange(boardsize*boardsize)[np.logical_not(played)]), 0
 
-
-def softmax(x, t):
-    """Compute softmax values for each sets of scores in x."""
-    e_x = np.exp((x - np.max(x))/t)
-    return e_x / e_x.sum()
-
-def softmax_policy(state, evaluator, temperature=1):
-	rand = np.random.random()
-	not_played = np.logical_not(np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
-		      state[black,padding:boardsize+padding,padding:boardsize+padding])).flatten()
-	scores = evaluator(state)
-	prob = softmax(scores[not_played], temperature)
-	tot = 0
-	choice = None
-	for i in range(prob.size):
-		tot += prob[i]
-		if(tot>rand):
-			choice = i
-			break
-	return not_played.nonzero()[0][choice], scores.max()
 
 def Q_update(network, optimizer, mem, batch_size):
 	states1, actions, rewards, states2 = mem.sample_batch(batch_size)
