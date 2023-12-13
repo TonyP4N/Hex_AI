@@ -3,6 +3,7 @@ from random import choice
 from time import sleep
 import tensorflow as tf
 import sys
+
 sys.path.append("..")
 from inputFormat import *
 
@@ -32,13 +33,6 @@ class HexAgent():
         self.model = tf.keras.models.load_model("C:/Users/32827/Documents/GitHub/Hex_AI/qlearn")
         # self.search()
 
-        # 创建模型
-
-    def _build_model(self):
-        # Neural Net for Deep-Q learning Model
-        model = tf.keras.models.load_model("C:/Users/32827/Documents/GitHub/Hex_AI/qlearn")
-        return model
-    
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
 
@@ -65,7 +59,7 @@ class HexAgent():
                 self.board_size = int(s[1])
                 self.colour = s[2]
                 self.board = [
-                    [0]*self.board_size for i in range(self.board_size)]
+                    [0] * self.board_size for i in range(self.board_size)]
 
                 if self.colour == "R":
                     self.search()
@@ -91,40 +85,40 @@ class HexAgent():
                     self.make_move()
 
         return False
-    
+
     def stateToInput(self):
         board = self.board
         ret = new_game(len(board))
-        padding = (input_size - len(board)+1)//2
+        padding = (input_size - len(board) + 1) // 2
         for i in range(len(board)):
             for j in range(len(board)):
                 if board[i][j] == 'R':
-                    play_cell(ret, (i+padding,j+padding), white)
+                    play_cell(ret, (i + padding, j + padding), white)
                 elif board[i][j] == 'B':
-                    play_cell(ret, (i+padding,j+padding), black)
+                    play_cell(ret, (i + padding, j + padding), black)
         return ret
 
-    def search(self, time_budget = 1):
+    def search(self, time_budget=1):
         """
         Compute resistance for all moves in current state.
         """
         state = self.stateToInput()
-        #get equivalent white to play game if black to play
+        # get equivalent white to play game if black to play
         # toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
         # if(toplay == black):
         #     state = mirror_game(state)
-        played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
-        state[black,padding:boardsize+padding,padding:boardsize+padding]).flatten()
+        played = np.logical_or(state[white, padding:boardsize + padding, padding:boardsize + padding], \
+                               state[black, padding:boardsize + padding, padding:boardsize + padding]).flatten()
         state = tf.convert_to_tensor(state, dtype=tf.float32)
         self.scores = self.model(tf.expand_dims(state, axis=0))
-        #set value of played cells impossibly low so they are never picked
-        played_indices = np.where(played)[0]//11
-        played_indices2 = np.where(played)[0]%11
+        # set value of played cells impossibly low so they are never picked
+        played_indices = np.where(played)[0] // 11
+        played_indices2 = np.where(played)[0] % 11
         # print(played_indices)
         # print(played_indices2)
         # Assuming 'scores' is your TensorFlow tensor
         self.scores = self.scores.numpy()  # Convert to NumPy array
-        #set value of played cells impossibly low so they are never picked
+        # set value of played cells impossibly low so they are never picked
         for x in range(len(played_indices)):
             self.scores[0][played_indices[x]][played_indices2[x]] = -2
 
@@ -138,9 +132,9 @@ class HexAgent():
 
     def make_move(self):
         """使用训练好的模型来选择最佳移动。"""
-        move = np.unravel_index(self.scores.argmax(), (boardsize,boardsize))
-		#correct move for smaller boardsizes
-		#flip returned move if black to play to get move in actual game
+        move = np.unravel_index(self.scores.argmax(), (boardsize, boardsize))
+        # correct move for smaller boardsizes
+        # flip returned move if black to play to get move in actual game
         self.execute_move(move)
         # current_state = self.board_to_input()
         # q_values = self.model.predict(current_state)[0]
@@ -160,12 +154,10 @@ class HexAgent():
         # else:
         #     print("No valid move found!")
 
-
     def execute_move(self, move):
         print(move)
         self.board[move[0]][move[1]] = self.colour
         self.s.sendall(bytes(f"{move[0]},{move[1]}\n", "utf-8"))
-
 
     def opp_colour(self):
         """Returns the char representation of the colour opposite to the
