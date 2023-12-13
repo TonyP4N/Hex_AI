@@ -2,7 +2,7 @@ def letter_to_number(letter):
     return str(ord(letter.lower()) - ord('a'))
 
 
-input_file_path = 'train_data/player_game_list_txt_3.txt'
+input_file_path = 'train_data/player_game_list_txt_12.txt'
 output_file_path = 'train_data/player_game_list_move.txt'
 
 finalList = []
@@ -19,7 +19,10 @@ with open(input_file_path, 'r', encoding='utf-8') as file:
                     moveList.append(moveList[0])
                 else:
                     moveList.append(i[2].capitalize()+letter_to_number(i[3]))
-            finalList.append(' '.join(moveList))
+
+            if len(moveList) >= 5:
+                finalList.append(' '.join(moveList))
+
 
 with open(output_file_path, "a") as f:
     for item in finalList:
