@@ -136,14 +136,15 @@ class MCTSAgent():
     def simulate(self, state):
         # 随机模拟直到游戏结束
         current_state = state
+        current_colour = self.colour  # 使用一个变量来跟踪当前的颜色
         while not self.is_terminal(current_state):
             legal_moves = self.get_legal_moves(current_state)
             if not legal_moves:  # Check if there are legal moves left
                 break
             move = choice(legal_moves)
-            current_state = make_simulated_move(current_state, move, self.toggle_colour(self.colour))
+            current_state = make_simulated_move(current_state, move, current_colour)
+            current_colour = self.toggle_colour(current_colour)  # 在每次模拟步骤后切换颜色
         return self.get_winner(current_state)
-
     # MCTS的反向传播阶段
     def backpropagate(self, node, winner):
         while node is not None:
@@ -181,32 +182,83 @@ class MCTSAgent():
 
     def check_win(self, colour):
         """检查指定颜色是否获胜"""
-        visited = set()
+        if colour == "R":
+            # 红色玩家赢得游戏的条件是垂直方向上连线
+            for i in range(self.board_size):
+                if self.check_vertical_win(colour):
+                    return True
+            return False
+        elif colour == "B":
+            # 蓝色玩家赢得游戏的条件是水平方向上连线
+            for j in range(self.board_size):
+                if self.check_horizontal_win(colour):
+                    return True
+            return False
+
+
+    def check_horizontal_win(self, colour):
+        # 遍历每一行的起始位置
         for i in range(self.board_size):
-            if colour == "R" and self.board[0][i] == colour:  # Change here for "R"
-                if self.dfs(0, i, colour, visited):  # Change here for "R"
-                    return True
-            if colour == "B" and self.board[i][0] == colour:
-                if self.dfs(i, 0, colour, visited):
-                    return True
+            if self.board[i][0] == colour and self.check_horizontal_win_from(i, 0, colour):
+                return True
         return False
 
-    def dfs(self, i, j, colour, visited):
-        """使用深度优先搜索检查获胜条件"""
+        # 检查垂直方向连线（蓝色玩家）
+
+    def check_vertical_win(self, colour):
+        # 遍历每一列的起始位置
+        for j in range(self.board_size):
+            if self.board[0][j] == colour and self.check_vertical_win_from(0, j, colour):
+                return True
+        return False
+
+    def check_horizontal_win_from(self, i, j, colour, visited=None):
+        """使用深度优先搜索检查从给定位置开始是否有水平方向上的连线获胜条件"""
+        if visited is None:
+            visited = set()
+
+        # 如果当前位置已经访问过，防止重复搜索
         if (i, j) in visited:
             return False
         visited.add((i, j))
 
-        if colour == "R" and j == self.board_size - 1:
-            return True
-        if colour == "B" and i == self.board_size - 1:
+        # 如果达到了右边界
+        if j == self.board_size - 1:
             return True
 
-        for di, dj in [(1, 0), (0, 1), (-1, 0), (0, -1), (1, -1), (-1, 1)]:
+        # 检查右边和右上方向的相邻位置
+        for di, dj in [(0, 1), (-1, 1)]:
             ni, nj = i + di, j + dj
             if 0 <= ni < self.board_size and 0 <= nj < self.board_size:
-                if self.board[ni][nj] == colour and self.dfs(ni, nj, colour, visited):
-                    return True
+                if self.board[ni][nj] == colour:
+                    if self.check_horizontal_win_from(ni, nj, colour, visited):
+                        return True
+
+        # 如果所有可能的路径都不满足获胜条件，则返回 False
+        return False
+
+    def check_vertical_win_from(self, i, j, colour):
+        """使用深度优先搜索检查从给定位置开始是否有垂直方向上的连线获胜条件"""
+        visited = set()
+
+        # 如果当前位置已经访问过，防止重复搜索
+        if (i, j) in visited:
+            return False
+        visited.add((i, j))
+
+        # 如果达到了下边界
+        if i == self.board_size - 1:
+            return True
+
+        # 检查下方和右下方向的相邻位置
+        for di, dj in [(1, 0), (1, -1)]:
+            ni, nj = i + di, j + dj
+            if 0 <= ni < self.board_size and 0 <= nj < self.board_size:
+                if self.board[ni][nj] == colour:
+                    if self.check_vertical_win_from(ni, nj, colour):
+                        return True
+
+        # 如果所有可能的路径都不满足获胜条件，则返回 False
         return False
 
     def get_legal_moves(self, state):
