@@ -18,8 +18,9 @@ class HexAgent():
         self.board_size = board_size
         self.board = [[0] * self.board_size for _ in range(self.board_size)]
         self.colour = ""
-        self.max_depth = 1 # Depth
+        self.max_depth = 1  # Depth
         self.evaluation_cache = {}
+        self.swap_flag = True
 
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
@@ -41,13 +42,13 @@ class HexAgent():
 
         messages = data.decode("utf-8").strip().split("\n")
         messages = [x.split(";") for x in messages]
-        # print(messages)
+        print(messages)
         for s in messages:
             if s[0] == "START":
                 self.board_size = int(s[1])
                 self.colour = s[2]
                 self.board = [
-                    [0]*self.board_size for i in range(self.board_size)]
+                    [0] * self.board_size for i in range(self.board_size)]
 
                 if self.colour == "R":
                     self.make_move()
@@ -67,8 +68,10 @@ class HexAgent():
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour()
-
-                    self.make_move()
+                    if self.swap_flag:
+                        self.swap_move()
+                    else:
+                        self.make_move()
 
         return False
 
@@ -89,7 +92,27 @@ class HexAgent():
                 best_move = move
                 alpha = max(alpha, score)
 
+        print(best_move)
+        print(best_score)
+
         self.execute_move(best_move)
+
+    def swap_move(self):
+        board = self.board
+        # 00 01 02 10 11 20
+        # 1010 1009 1008 0910 0909 0810
+        not_swap = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0], [10, 10], [10, 9], [10, 8], [9, 10], [9, 9],
+                    [8, 10]]
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                if board[i][j] != 0:
+                    if [i, j] in not_swap:
+                        self.swap_flag = False
+                        self.make_move()
+                    else:
+                        self.swap_flag = False
+                        self.colour = "R"
+                        self.s.sendall(bytes("SWAP\n", "utf-8"))
 
     def alphabeta(self, depth, alpha, beta, maximizingPlayer):
         """Alpha-Beta pruning logic."""
@@ -174,6 +197,7 @@ class HexAgent():
                     if line_score >= 3:  # 例如，长度为3或以上的连线
                         threat_score -= line_score * 5  # 适当降低权重
         return threat_score
+
     def adjust_evaluation_strategy(self):
         """
         根据当前游戏状态动态调整评估策略。
@@ -188,6 +212,7 @@ class HexAgent():
         else:
             # 游戏中后期，增加对对手威胁的关注
             self.focus_on_opponent_threat = True
+
     def evaluate_board(self):
         # # 结合不同的评分策略
         # my_path_score = self.calculate_dijkstra_score(self.colour)
@@ -203,17 +228,20 @@ class HexAgent():
         #         opp_path_score + opp_center_score + opp_partial_line_score + opp_threat_score)
         self.adjust_evaluation_strategy()
 
-        my_score = self.calculate_dijkstra_score(self.colour) + self.calculate_center_score(self.colour) + self.calculate_partial_line_score(self.colour)
-        opponent_score = self.calculate_dijkstra_score(self.opp_colour()) + self.calculate_center_score(self.opp_colour()) + self.calculate_partial_line_score(self.opp_colour())
+        my_score = self.calculate_dijkstra_score(self.colour) + self.calculate_center_score(
+            self.colour) + self.calculate_partial_line_score(self.colour)
+        opponent_score = self.calculate_dijkstra_score(self.opp_colour()) + self.calculate_center_score(
+            self.opp_colour()) + self.calculate_partial_line_score(self.opp_colour())
         threat_score = 0
 
         if self.focus_on_opponent_threat:
             threat_score = self.evaluate_opponent_threat(self.colour)
 
         return my_score - opponent_score - threat_score
+
     def calculate_dijkstra_score(self, colour):
 
-    # Dijkstra算法
+        # Dijkstra算法
         distance = [[self.INFINITY] * self.board_size for _ in range(self.board_size)]
         if colour == "R":
             start = 0
@@ -342,7 +370,6 @@ class HexAgent():
         if self.board[i][j] != colour:
             return False
         return self.check_horizontal_win_from(i, j + 1, colour)
-
 
     def check_vertical_win_from(self, i, j, colour):
         """Returns True if the given colour has won vertically from the

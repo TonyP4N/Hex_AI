@@ -31,7 +31,7 @@ class HexAgent():
         self.colour = ""
         self.max_depth = 1  # Depth
         self.evaluation_cache = {}
-        self.model = tf.keras.models.load_model("dqn_train_models/qlearn_600_episode")
+        self.model = tf.keras.models.load_model("dqn_train_models/qlearn_5000_episode")
         self.swap_flag = True
         # self.search()
 
@@ -193,6 +193,7 @@ class HexAgent():
             for j in range(self.board_size):
                 if board[i][j] != 0:
                     if [i, j] in not_swap:
+                        self.swap_flag = False
                         self.search()
                         self.make_move()
                     else:
