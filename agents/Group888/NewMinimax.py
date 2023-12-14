@@ -51,6 +51,7 @@ class HexAgent():
                     [0] * self.board_size for i in range(self.board_size)]
 
                 if self.colour == "R":
+                    self.swap_flag = False
                     self.make_move()
 
             elif s[0] == "END":
@@ -69,6 +70,7 @@ class HexAgent():
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour()
                     if self.swap_flag:
+                        self.swap_flag = False
                         self.swap_move()
                     else:
                         self.make_move()
@@ -92,9 +94,6 @@ class HexAgent():
                 best_move = move
                 alpha = max(alpha, score)
 
-        print(best_move)
-        print(best_score)
-
         self.execute_move(best_move)
 
     def swap_move(self):
@@ -107,11 +106,9 @@ class HexAgent():
             for j in range(self.board_size):
                 if board[i][j] != 0:
                     if [i, j] in not_swap:
-                        self.swap_flag = False
                         self.make_move()
                     else:
-                        self.swap_flag = False
-                        self.colour = "R"
+                        self.colour = self.opp_colour()
                         self.s.sendall(bytes("SWAP\n", "utf-8"))
 
     def alphabeta(self, depth, alpha, beta, maximizingPlayer):
