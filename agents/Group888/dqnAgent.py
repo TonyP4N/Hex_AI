@@ -1,4 +1,5 @@
 import socket
+import time
 from random import choice
 from time import sleep
 import tensorflow as tf
@@ -30,7 +31,8 @@ class HexAgent():
         self.colour = ""
         self.max_depth = 1  # Depth
         self.evaluation_cache = {}
-        self.model = tf.keras.models.load_model("xxx")
+        self.model = tf.keras.models.load_model("dqn_train_models/qlearn_600_episode")
+        self.swap_flag = True
         # self.search()
 
     def run(self):
@@ -81,8 +83,11 @@ class HexAgent():
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour()
-                    self.search()
-                    self.make_move()
+                    if self.swap_flag:
+                        self.swap_move()
+                    else:
+                        self.search()
+                        self.make_move()
 
         return False
 
@@ -177,6 +182,22 @@ class HexAgent():
                 if self.board[i][j] == 0:
                     moves.append((i, j))
         return moves
+
+    def swap_move(self):
+        board = self.board
+        # 00 01 02 10 11 20
+        # 1010 1009 1008 0910 0909 0810
+        not_swap = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0], [10, 10], [10, 9], [10, 8], [9, 10], [9, 9],
+                    [8, 10]]
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                if board[i][j] != 0:
+                    if [i, j] in not_swap:
+                        self.search()
+                        self.make_move()
+                    else:
+                        self.swap_flag = False
+                        self.s.sendall(bytes("SWAP\n", "utf-8"))
 
 
 if (__name__ == "__main__"):
