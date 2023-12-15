@@ -108,7 +108,6 @@ class HexAgent():
                     if [i, j] in not_swap:
                         self.make_move()
                     else:
-                        self.colour = self.opp_colour()
                         self.s.sendall(bytes("SWAP\n", "utf-8"))
 
     def alphabeta(self, depth, alpha, beta, maximizingPlayer):
