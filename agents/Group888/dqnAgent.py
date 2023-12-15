@@ -64,6 +64,7 @@ class HexAgent():
                     [0] * self.board_size for i in range(self.board_size)]
 
                 if self.colour == "R":
+                    self.swap_flag = False
                     self.search()
                     self.make_move()
 
@@ -109,9 +110,9 @@ class HexAgent():
         """
         state = self.stateToInput()
         # get equivalent white to play game if black to play
-        # toplay = white if self.state.toplay == self.state.PLAYERS["white"] else black
-        # if(toplay == black):
-        #     state = mirror_game(state)
+        toplay = white if self.colour == "B" else "R"
+        if(toplay == "R"):
+            state = mirror_game(state)
         played = np.logical_or(state[white, padding:boardsize + padding, padding:boardsize + padding], \
                                state[black, padding:boardsize + padding, padding:boardsize + padding]).flatten()
         state = tf.convert_to_tensor(state, dtype=tf.float32)
@@ -125,7 +126,7 @@ class HexAgent():
         self.scores = self.scores.numpy()  # Convert to NumPy array
         # set value of played cells impossibly low so they are never picked
         for x in range(len(played_indices)):
-            self.scores[0][played_indices[x]][played_indices2[x]] = -2
+            self.scores[0][played_indices[x]][played_indices2[x]] = -1000
 
     # def board_to_input(self):
     #     """将当前棋盘转换为模型输入。"""
@@ -182,23 +183,6 @@ class HexAgent():
                 if self.board[i][j] == 0:
                     moves.append((i, j))
         return moves
-
-    def swap_move(self):
-        board = self.board
-        # 00 01 02 10 11 20
-        # 1010 1009 1008 0910 0909 0810
-        not_swap = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0], [10, 10], [10, 9], [10, 8], [9, 10], [9, 9],
-                    [8, 10]]
-        for i in range(self.board_size):
-            for j in range(self.board_size):
-                if board[i][j] != 0:
-                    if [i, j] in not_swap:
-                        self.swap_flag = False
-                        self.search()
-                        self.make_move()
-                    else:
-                        self.swap_flag = False
-                        self.s.sendall(bytes("SWAP\n", "utf-8"))
 
 
 if (__name__ == "__main__"):
