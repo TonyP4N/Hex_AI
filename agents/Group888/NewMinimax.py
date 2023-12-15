@@ -4,9 +4,6 @@ from time import sleep
 
 
 class HexAgent():
-    """This class describes the default Hex agent. It will randomly send a
-    valid move at each turn, and it will choose to swap with a 50% chance.
-    """
 
     HOST = "127.0.0.1"
     PORT = 1234
@@ -42,7 +39,7 @@ class HexAgent():
 
         messages = data.decode("utf-8").strip().split("\n")
         messages = [x.split(";") for x in messages]
-        print(messages)
+        # print(messages)
         for s in messages:
             if s[0] == "START":
                 self.board_size = int(s[1])
