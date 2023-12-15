@@ -8,7 +8,7 @@ class HexAgent():
 
     HOST = "127.0.0.1"
     PORT = 1234
-    INFINITY = float("inf")
+    INFINITY = 9999
 
     def __init__(self, board_size=11):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,6 +20,7 @@ class HexAgent():
         self.evaluation_cache = {}
         self.swap_flag = True
         self.game = new_game()
+        self.made_moves = []
 
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
@@ -62,7 +63,7 @@ class HexAgent():
 
                 elif s[1] == "SWAP":
                     self.colour = self.opp_colour()
-                    self.game = flip_game(self.game)
+                    self.game = mirror_game(self.game)
                     if s[3] == self.colour:
                         self.make_move()
 
@@ -71,10 +72,10 @@ class HexAgent():
                     self.board[action[0]][action[1]] = self.opp_colour()
                     # cells = cell(self.int_to_str(action[0]),action[1])
                     # print(cells)
-                    play_cell(self.game,cell_m(action),white if self.opp_colour == 'B' else black)
+                    play_cell(self.game,cell_m(action),white if self.opp_colour == 'R' else black)
                     if self.swap_flag:
                         self.swap_flag = False
-                        self.game = flip_game(self.game)
+                        self.game = mirror_game(self.game)
                         self.swap_move()
                     else:
                         self.make_move()
@@ -90,9 +91,10 @@ class HexAgent():
         alpha = -self.INFINITY
         beta = self.INFINITY
 
-        for move in self.get_possible_moves():
+        for move in self.get_possible_moves([]):
             self.make_temporary_move(move)
             score = self.alphabeta(0, alpha, beta, False)
+            # print(score)
             self.undo_move(move)
 
             if score > best_score:
@@ -100,7 +102,8 @@ class HexAgent():
                 best_move = move
                 alpha = max(alpha, score)
 
-        play_cell(self.game,cell_m(best_move),white if self.opp_colour == 'B' else black)
+        self.made_moves.append(best_move)
+        play_cell(self.game,cell_m(best_move),white if self.colour == 'B' else black)
         self.execute_move(best_move)
 
     def swap_move(self):
@@ -124,6 +127,7 @@ class HexAgent():
         if board_hash in self.evaluation_cache:
             return self.evaluation_cache[board_hash]
         
+        # print(self.is_game_over())
         if self.is_game_over():
             return -self.INFINITY if maximizingPlayer else self.INFINITY
 
@@ -133,7 +137,14 @@ class HexAgent():
             return score
         if maximizingPlayer:
             max_eval = -self.INFINITY
-            for move in self.get_possible_moves():
+            neighbors_move = self.neighbor_moves(self.made_moves)
+            for move in neighbors_move:
+                self.make_temporary_move(move)
+                eval_neighbour = self.alphabeta(depth + 1, alpha, beta, False)
+                if eval_neighbour == self.INFINITY:
+                    return eval_neighbour
+                self.undo_move(move)
+            for move in self.get_possible_moves(neighbors_move):
                 self.make_temporary_move(move)
                 eval = self.alphabeta(depth + 1, alpha, beta, False)
                 self.undo_move(move)
@@ -145,7 +156,14 @@ class HexAgent():
             return max_eval
         else:
             min_eval = self.INFINITY
-            for move in self.get_possible_moves():
+            neighbors_move = self.neighbor_moves(self.made_moves)
+            for move in neighbors_move:
+                self.make_temporary_move(move)
+                eval_neighbour = self.alphabeta(depth + 1, alpha, beta, False)
+                if eval_neighbour == -self.INFINITY:
+                    return eval_neighbour
+                self.undo_move(move)
+            for move in self.get_possible_moves(neighbors_move):
                 self.make_temporary_move(move)
                 eval = self.alphabeta(depth + 1, alpha, beta, True)
                 self.undo_move(move)
@@ -155,6 +173,17 @@ class HexAgent():
                 if beta <= alpha:
                     break
             return min_eval
+
+    def neighbor_moves(self,moves):
+        posmove = []
+        for move in moves:
+            ngb = neighbors(move)
+            for x in ngb:
+                if x[0] <11 and x[1] <11:
+                    # print(x[0],x[1])
+                    if self.board[x[0]][x[1]] == 0:
+                                posmove.append((x[0], x[1]))
+        return posmove
 
     def calculate_partial_line_score(self, colour):
         """评估形成部分连线的得分"""
@@ -314,18 +343,30 @@ class HexAgent():
         # 将当前棋盘状态转换为哈希值
         return hash(tuple(tuple(row) for row in self.board))
 
-    def get_possible_moves(self):
+    def get_possible_moves(self,nbm):
         moves = []
         for i in range(self.board_size):
             for j in range(self.board_size):
                 if self.board[i][j] == 0:
-                    moves.append((i, j))
+                    if (i, j) not in nbm:
+                        moves.append((i, j))
         return moves
+    
+    # def get_possible_moves(self):
+    #     moves = []
+    #     for i in range(self.board_size):
+    #         for j in range(self.board_size):
+    #             if self.board[i][j] == 0:
+    #                 moves.append((i, j))
+    #     return moves
 
     def make_temporary_move(self, move):
+        self.game2 = self.game.copy()
+        play_cell(self.game2,cell_m(move),white if self.colour == 'B' else black)
         self.board[move[0]][move[1]] = self.colour
 
     def undo_move(self, move):
+        self.game = self.game.copy()
         self.board[move[0]][move[1]] = 0
 
     def opp_colour(self):
@@ -340,7 +381,7 @@ class HexAgent():
             return "None"
 
     def is_game_over(self):
-        return winner(self.game)
+        return True if winner(self.game2) is not None else False
         # return self.check_win("R") or self.check_win("B")
 
     def check_win(self, colour):
