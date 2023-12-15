@@ -22,7 +22,7 @@ class Node:
 
     def uct_select_child(self):
         log_visits = math.log(self.visits)
-        return max(self.children, key=lambda c: c.wins / c.visits + math.sqrt(2 * log_visits / c.visits))
+        return max(self.children, key=lambda c: c.wins / c.visits + 1.4 * math.sqrt(log_visits / c.visits))
 
     def add_child(self, m, b):
         n = Node(move=m, parent=self, board=b)
@@ -39,14 +39,12 @@ class Node:
 
 
 class MCTSAgent():
-    """This class describes the default Hex agent. It will randomly send a
-    valid move at each turn, and it will choose to swap with a 50% chance.
-    """
 
     HOST = "127.0.0.1"
     PORT = 1234
 
-    def __init__(self, board_size=11, time_limit=2):
+    def __init__(self, board_size=11, time_limit=3):
+
         print('np')
         self.s = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM
@@ -58,6 +56,7 @@ class MCTSAgent():
         self.board = [[0] * self.board_size for _ in range(self.board_size)]
         self.colour = ""
         self.turn_count = 0
+        self.swap_flag = True
         self.time_limit = time_limit
 
     def run(self):
@@ -89,6 +88,7 @@ class MCTSAgent():
                     [0] * self.board_size for i in range(self.board_size)]
 
                 if self.colour == "R":
+                    self.swap_flag = False
                     self.make_move()
 
             elif s[0] == "END":
@@ -106,10 +106,27 @@ class MCTSAgent():
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour(self.colour)
-
-                    self.make_move()
+                    if self.swap_flag:
+                        self.swap_flag = False
+                        self.swap_move()
+                    else:
+                        self.make_move()
 
         return False
+
+    def swap_move(self):
+        board = self.board
+        # 00 01 02 10 11 20
+        # 1010 1009 1008 0910 0909 0810
+        not_swap = [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [2, 0], [10, 10], [10, 9], [10, 8], [9, 10], [9, 9],
+                    [8, 10]]
+        for i in range(self.board_size):
+            for j in range(self.board_size):
+                if board[i][j] != 0:
+                    if [i, j] in not_swap:
+                        self.make_move()
+                    else:
+                        self.s.sendall(bytes("SWAP\n", "utf-8"))
 
     def make_move(self):
         root = Node(board=self.board, move=None)
