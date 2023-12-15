@@ -1,6 +1,7 @@
 import socket
 from random import choice
 from time import sleep
+from inputFormat import *
 
 
 class HexAgent():
@@ -18,6 +19,7 @@ class HexAgent():
         self.max_depth = 1  # Depth
         self.evaluation_cache = {}
         self.swap_flag = True
+        self.game = new_game()
 
     def run(self):
         """Reads data until it receives an END message or the socket closes."""
@@ -60,19 +62,26 @@ class HexAgent():
 
                 elif s[1] == "SWAP":
                     self.colour = self.opp_colour()
+                    self.game = flip_game(self.game)
                     if s[3] == self.colour:
                         self.make_move()
 
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour()
+                    # cells = cell(self.int_to_str(action[0]),action[1])
+                    # print(cells)
+                    play_cell(self.game,cell_m(action),white if self.opp_colour == 'B' else black)
                     if self.swap_flag:
                         self.swap_flag = False
+                        self.game = flip_game(self.game)
                         self.swap_move()
                     else:
                         self.make_move()
 
         return False
+    def int_to_str(self,a):
+        return chr(a+ord('a'))
 
     def make_move(self):
         """Use Alpha-Beta pruning to find the best move."""
@@ -91,6 +100,7 @@ class HexAgent():
                 best_move = move
                 alpha = max(alpha, score)
 
+        play_cell(self.game,cell_m(best_move),white if self.opp_colour == 'B' else black)
         self.execute_move(best_move)
 
     def swap_move(self):
@@ -113,8 +123,11 @@ class HexAgent():
         board_hash = self.hash_board()
         if board_hash in self.evaluation_cache:
             return self.evaluation_cache[board_hash]
+        
+        if self.is_game_over():
+            return -self.INFINITY if maximizingPlayer else self.INFINITY
 
-        if depth == self.max_depth or self.is_game_over():
+        if depth == self.max_depth:
             score = self.evaluate_board()
             self.evaluation_cache[board_hash] = score
             return score
@@ -327,7 +340,8 @@ class HexAgent():
             return "None"
 
     def is_game_over(self):
-        return self.check_win("R") or self.check_win("B")
+        return winner(self.game)
+        # return self.check_win("R") or self.check_win("B")
 
     def check_win(self, colour):
         """Returns True if the given colour has won, False otherwise."""
