@@ -124,11 +124,11 @@ class HexAgent():
                 best_move = move
                 alpha = max(alpha, score1)
             
-        print(best_move,score1)
+        # print(best_move, score1)
         self.made_moves.append(best_move)
         play_cell(self.game,cell_m((best_move[0]+2,best_move[1]+2)),black if self.colour == 'R' else white)
         self.execute_move(best_move)
-        print(state_string(self.game))
+        # print(state_string(self.game))
 
     def swap_move(self):
         board = self.board
