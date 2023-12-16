@@ -104,6 +104,7 @@ class HexAgent():
         #         alpha = max(alpha, score)
 
         for move in self.get_possible_moves([]):
+            # self.game2 = self.game.copy()
             self.make_temporary_move(move)
             score = self.alphabeta(0, alpha, beta, False)
             # print(score)
@@ -156,18 +157,18 @@ class HexAgent():
             max_eval = -self.INFINITY
             neighbors_move = self.neighbor_moves(self.made_moves)
             for move in neighbors_move:
-                self.make_temporary_move(move)
+                self.make_temporary_move2(move)
                 eval_neighbour = self.alphabeta(depth + 1, alpha, beta, False)
                 # print(eval_neighbour)
                 if eval_neighbour == self.INFINITY:
                     return eval_neighbour
-                self.undo_move(move)
+                self.undo_move2(move)
                 max_eval = max(max_eval,eval_neighbour)
                 alpha = max(alpha, eval_neighbour)
             for move in self.get_possible_moves(neighbors_move):
-                self.make_temporary_move(move)
+                self.make_temporary_move2(move)
                 eval = self.alphabeta(depth + 1, alpha, beta, False)
-                self.undo_move(move)
+                self.undo_move2(move)
 
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
@@ -178,18 +179,18 @@ class HexAgent():
             min_eval = self.INFINITY
             neighbors_move = self.neighbor_moves(self.made_moves)
             for move in neighbors_move:
-                self.make_temporary_move(move)
+                self.make_temporary_move2(move)
                 eval_neighbour = self.alphabeta(depth + 1, alpha, beta, False)
                 if eval_neighbour == -self.INFINITY:
                     return eval_neighbour
-                self.undo_move(move)
+                self.undo_move2(move)
                 min_eval = min(min_eval,eval_neighbour)
                 beta = min(beta, eval_neighbour)
                 # print(min_eval)
             for move in self.get_possible_moves(neighbors_move):
-                self.make_temporary_move(move)
+                self.make_temporary_move2(move)
                 eval = self.alphabeta(depth + 1, alpha, beta, True)
-                self.undo_move(move)
+                self.undo_move2(move)
 
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
@@ -388,8 +389,17 @@ class HexAgent():
         play_cell(self.game2,cell_m((move[0]+2,move[1]+2)),black if self.colour == 'R' else white)
         self.board[move[0]][move[1]] = self.colour
 
+    def make_temporary_move2(self, move):
+        self.game3 = self.game2.copy()
+        play_cell(self.game3,cell_m((move[0]+2,move[1]+2)),black if self.colour == 'R' else white)
+        self.board[move[0]][move[1]] = self.colour
+
     def undo_move(self, move):
-        self.game = self.game.copy()
+        self.game2 = self.game.copy()
+        self.board[move[0]][move[1]] = 0
+    
+    def undo_move2(self, move):
+        self.game3 = self.game2.copy()
         self.board[move[0]][move[1]] = 0
 
     def opp_colour(self):
