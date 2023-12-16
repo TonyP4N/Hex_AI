@@ -2,6 +2,7 @@ import socket
 from random import choice
 from time import sleep
 from inputFormat import *
+from resistance import *
 
 
 class HexAgent():
@@ -88,7 +89,7 @@ class HexAgent():
         alpha = -self.INFINITY
         beta = self.INFINITY
 
-        neighbors_move = self.neighbor_moves(self.made_moves)
+        # neighbors_move = self.neighbor_moves(self.made_moves)
         # for move in neighbors_move:
         #     self.make_temporary_move(move)
         #     score = self.alphabeta(0, alpha, beta, False)
@@ -102,22 +103,28 @@ class HexAgent():
         #         best_score = score
         #         best_move = move
         #         alpha = max(alpha, score)
-
+        boardscore = score(self.game,black if self.colour == 'R' else white)
         for move in self.get_possible_moves([]):
             # self.game2 = self.game.copy()
             self.make_temporary_move(move)
-            score = self.alphabeta(0, alpha, beta, False)
+            score1 = self.alphabeta(0, alpha, beta, False)
             # print(score)
             self.undo_move(move)
             # print(score)
-            if score == self.INFINITY:
+            if score1 == self.INFINITY:
                 best_move = move
                 break
-            if score > best_score:
-                best_score = score
+            score2 = boardscore[move[1]][move[0]]
+            # if (self.colour == 'R'):
+            score1 = score1 + score2
+            # else:
+            #     score1 = score1 - score2
+            if score1 > best_score:
+                best_score = score1
                 best_move = move
-                alpha = max(alpha, score)
-        # print(best_move,score)
+                alpha = max(alpha, score1)
+            
+        print(best_move,score1)
         self.made_moves.append(best_move)
         play_cell(self.game,cell_m((best_move[0]+2,best_move[1]+2)),black if self.colour == 'R' else white)
         self.execute_move(best_move)
