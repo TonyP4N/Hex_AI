@@ -116,7 +116,7 @@ class HexAgent():
                 break
             score2 = boardscore[move[1]][move[0]]
             # if (self.colour == 'R'):
-            score1 = score1 + score2
+            score1 = score1 + score2 * 50
             # else:
             #     score1 = score1 - score2
             if score1 > best_score:
