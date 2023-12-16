@@ -62,20 +62,17 @@ class HexAgent():
                     return True
 
                 elif s[1] == "SWAP":
+                    # self.game = mirror_game(self.game)
                     self.colour = self.opp_colour()
-                    self.game = mirror_game(self.game)
                     if s[3] == self.colour:
                         self.make_move()
 
                 elif s[3] == self.colour:
                     action = [int(x) for x in s[1].split(",")]
                     self.board[action[0]][action[1]] = self.opp_colour()
-                    # cells = cell(self.int_to_str(action[0]),action[1])
-                    # print(cells)
-                    play_cell(self.game,cell_m(action),white if self.opp_colour == 'R' else black)
+                    play_cell(self.game,cell_m((action[0]+2,action[1]+2)),black if self.opp_colour() == 'R' else white)
                     if self.swap_flag:
                         self.swap_flag = False
-                        self.game = mirror_game(self.game)
                         self.swap_move()
                     else:
                         self.make_move()
@@ -91,20 +88,39 @@ class HexAgent():
         alpha = -self.INFINITY
         beta = self.INFINITY
 
+        neighbors_move = self.neighbor_moves(self.made_moves)
+        # for move in neighbors_move:
+        #     self.make_temporary_move(move)
+        #     score = self.alphabeta(0, alpha, beta, False)
+        #     if score == self.INFINITY:
+        #         best_move = move
+        #         self.made_moves.append(best_move)
+        #         play_cell(self.game,cell_m((best_move[0]+2,best_move[1]+2)),black if self.colour == 'R' else white)
+        #         self.execute_move(best_move)
+        #         return
+        #     if score > best_score:
+        #         best_score = score
+        #         best_move = move
+        #         alpha = max(alpha, score)
+
         for move in self.get_possible_moves([]):
             self.make_temporary_move(move)
             score = self.alphabeta(0, alpha, beta, False)
             # print(score)
             self.undo_move(move)
-
+            # print(score)
+            if score == self.INFINITY:
+                best_move = move
+                break
             if score > best_score:
                 best_score = score
                 best_move = move
                 alpha = max(alpha, score)
-
+        # print(best_move,score)
         self.made_moves.append(best_move)
-        play_cell(self.game,cell_m(best_move),white if self.colour == 'B' else black)
+        play_cell(self.game,cell_m((best_move[0]+2,best_move[1]+2)),black if self.colour == 'R' else white)
         self.execute_move(best_move)
+        print(state_string(self.game))
 
     def swap_move(self):
         board = self.board
@@ -129,6 +145,7 @@ class HexAgent():
         
         # print(self.is_game_over())
         if self.is_game_over():
+            # print(winner(self.game2))
             return -self.INFINITY if maximizingPlayer else self.INFINITY
 
         if depth == self.max_depth:
@@ -141,9 +158,12 @@ class HexAgent():
             for move in neighbors_move:
                 self.make_temporary_move(move)
                 eval_neighbour = self.alphabeta(depth + 1, alpha, beta, False)
+                # print(eval_neighbour)
                 if eval_neighbour == self.INFINITY:
                     return eval_neighbour
                 self.undo_move(move)
+                max_eval = max(max_eval,eval_neighbour)
+                alpha = max(alpha, eval_neighbour)
             for move in self.get_possible_moves(neighbors_move):
                 self.make_temporary_move(move)
                 eval = self.alphabeta(depth + 1, alpha, beta, False)
@@ -163,6 +183,9 @@ class HexAgent():
                 if eval_neighbour == -self.INFINITY:
                     return eval_neighbour
                 self.undo_move(move)
+                min_eval = min(min_eval,eval_neighbour)
+                beta = min(beta, eval_neighbour)
+                # print(min_eval)
             for move in self.get_possible_moves(neighbors_move):
                 self.make_temporary_move(move)
                 eval = self.alphabeta(depth + 1, alpha, beta, True)
@@ -362,7 +385,7 @@ class HexAgent():
 
     def make_temporary_move(self, move):
         self.game2 = self.game.copy()
-        play_cell(self.game2,cell_m(move),white if self.colour == 'B' else black)
+        play_cell(self.game2,cell_m((move[0]+2,move[1]+2)),black if self.colour == 'R' else white)
         self.board[move[0]][move[1]] = self.colour
 
     def undo_move(self, move):
